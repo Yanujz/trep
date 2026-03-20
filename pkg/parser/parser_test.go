@@ -5,12 +5,12 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/trep-dev/trep/pkg/parser"
+	"github.com/Yanujz/trep/pkg/parser"
 
 	// Register all parsers.
-	_ "github.com/trep-dev/trep/pkg/parser/gotest"
-	_ "github.com/trep-dev/trep/pkg/parser/junit"
-	_ "github.com/trep-dev/trep/pkg/parser/tap"
+	_ "github.com/Yanujz/trep/pkg/parser/gotest"
+	_ "github.com/Yanujz/trep/pkg/parser/junit"
+	_ "github.com/Yanujz/trep/pkg/parser/tap"
 )
 
 func TestForName_KnownFormats(t *testing.T) {

@@ -13,8 +13,8 @@ import (
 	"strings"
 	"time"
 
-	covmodel "github.com/trep-dev/trep/pkg/coverage/model"
-	"github.com/trep-dev/trep/pkg/delta"
+	covmodel "github.com/Yanujz/trep/pkg/coverage/model"
+	"github.com/Yanujz/trep/pkg/delta"
 )
 
 //go:embed template.html

@@ -1,4 +1,4 @@
-module github.com/trep-dev/trep
+module github.com/Yanujz/trep
 
 go 1.21
 

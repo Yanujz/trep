@@ -4,7 +4,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/trep-dev/trep/pkg/model"
+	"github.com/Yanujz/trep/pkg/model"
 )
 
 func TestReportStats_Empty(t *testing.T) {

@@ -7,8 +7,8 @@ import (
 	"io"
 	"time"
 
-	covmodel "github.com/trep-dev/trep/pkg/coverage/model"
-	"github.com/trep-dev/trep/pkg/model"
+	covmodel "github.com/Yanujz/trep/pkg/coverage/model"
+	"github.com/Yanujz/trep/pkg/model"
 )
 
 // ── Test report ───────────────────────────────────────────────────────────────

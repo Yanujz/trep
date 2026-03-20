@@ -8,13 +8,13 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/trep-dev/trep/pkg/delta"
-	"github.com/trep-dev/trep/pkg/model"
-	"github.com/trep-dev/trep/pkg/parser"
-	"github.com/trep-dev/trep/pkg/render/annotations"
-	htmlrender "github.com/trep-dev/trep/pkg/render/html"
-	jsonrender "github.com/trep-dev/trep/pkg/render/json"
-	sarifrender "github.com/trep-dev/trep/pkg/render/sarif"
+	"github.com/Yanujz/trep/pkg/delta"
+	"github.com/Yanujz/trep/pkg/model"
+	"github.com/Yanujz/trep/pkg/parser"
+	"github.com/Yanujz/trep/pkg/render/annotations"
+	htmlrender "github.com/Yanujz/trep/pkg/render/html"
+	jsonrender "github.com/Yanujz/trep/pkg/render/json"
+	sarifrender "github.com/Yanujz/trep/pkg/render/sarif"
 )
 
 type testOpts struct {

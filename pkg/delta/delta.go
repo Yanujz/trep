@@ -8,8 +8,8 @@ import (
 	"fmt"
 	"os"
 
-	covmodel "github.com/trep-dev/trep/pkg/coverage/model"
-	testmodel "github.com/trep-dev/trep/pkg/model"
+	covmodel "github.com/Yanujz/trep/pkg/coverage/model"
+	testmodel "github.com/Yanujz/trep/pkg/model"
 )
 
 const snapshotVersion = 1

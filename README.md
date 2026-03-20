@@ -42,7 +42,7 @@ brew install trep
 ### go install
 
 ```sh
-go install github.com/trep-dev/trep/cmd/trep@latest
+go install github.com/Yanujz/trep/cmd/trep@latest
 ```
 
 ### Build from source

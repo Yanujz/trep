@@ -4,9 +4,9 @@ import (
 	"strings"
 	"testing"
 
-	_ "github.com/trep-dev/trep/pkg/coverage/parser/clover"
+	_ "github.com/Yanujz/trep/pkg/coverage/parser/clover"
 
-	covparser "github.com/trep-dev/trep/pkg/coverage/parser"
+	covparser "github.com/Yanujz/trep/pkg/coverage/parser"
 )
 
 const basicClover = `<?xml version="1.0"?>

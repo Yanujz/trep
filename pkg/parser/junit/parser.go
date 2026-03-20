@@ -10,8 +10,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/trep-dev/trep/pkg/model"
-	"github.com/trep-dev/trep/pkg/parser"
+	"github.com/Yanujz/trep/pkg/model"
+	"github.com/Yanujz/trep/pkg/parser"
 )
 
 func init() { parser.Register(Parser{}) }

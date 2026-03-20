@@ -7,9 +7,9 @@ import (
 	"testing"
 	"time"
 
-	covmodel "github.com/trep-dev/trep/pkg/coverage/model"
-	"github.com/trep-dev/trep/pkg/delta"
-	"github.com/trep-dev/trep/pkg/model"
+	covmodel "github.com/Yanujz/trep/pkg/coverage/model"
+	"github.com/Yanujz/trep/pkg/delta"
+	"github.com/Yanujz/trep/pkg/model"
 )
 
 func TestFromTestReport(t *testing.T) {

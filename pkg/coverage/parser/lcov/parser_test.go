@@ -4,9 +4,9 @@ import (
 	"strings"
 	"testing"
 
-	_ "github.com/trep-dev/trep/pkg/coverage/parser/lcov"
+	_ "github.com/Yanujz/trep/pkg/coverage/parser/lcov"
 
-	covparser "github.com/trep-dev/trep/pkg/coverage/parser"
+	covparser "github.com/Yanujz/trep/pkg/coverage/parser"
 )
 
 const basicLCOV = `TN:test
