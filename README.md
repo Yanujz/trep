@@ -56,8 +56,7 @@ Commands:
 | Flag | Short | Default | Description |
 |---|---|---|---|
 | `--output` | `-o` | `<input>.html` | Output file; `-` for stdout |
-| `--output-format` | | `html` | Output format: `html` or `json` |
-| `--format` | `-f` | `auto` | Force input format: `junit` · `gtest` · `gotest` · `tap` |
+| `--output-format` | | `html` | Output format: `html` · `json` · `sarif` |
 | `--title` | `-t` | derived | Report title |
 | `--no-merge` | | `false` | One report per input instead of merging |
 | `--fail` | | `false` | Exit 1 when any tests failed |
@@ -74,7 +73,7 @@ Commands:
 | Flag | Short | Default | Description |
 |---|---|---|---|
 | `--output` | `-o` | `<input>.html` | Output file; `-` for stdout |
-| `--output-format` | | `html` | Output format: `html` or `json` |
+| `--output-format` | | `html` | Output format: `html` · `json` · `sarif` |
 | `--format` | `-f` | `auto` | Force input format: `lcov` · `gocover` · `cobertura` · `clover` |
 | `--title` | `-t` | derived | Report title |
 | `--threshold` | | `0` (off) | Minimum line coverage %; alias for `--threshold-line` |
@@ -314,8 +313,35 @@ trep report --tests results.xml --cov cov.out \
 |---|---|---|
 | _(default)_ | Self-contained HTML | Browser view, PR artifacts, email attachments |
 | `--output-format json` | Structured JSON | Dashboard ingestion, `jq` scripting, CI metrics |
+| `--output-format sarif` | SARIF 2.1.0 | GitHub Advanced Security code scanning alerts |
 | `--annotate` | GitHub/GitLab annotation lines | Inline PR comments, pipeline step decorations |
 | `--save-snapshot` | Compact JSON snapshot | Persistent baseline for future delta comparison |
+
+### SARIF output (GitHub Advanced Security)
+
+SARIF files can be uploaded to GitHub Advanced Security and displayed as code
+scanning alerts directly in pull requests.
+
+```sh
+# Produce SARIF for failed tests
+trep test --output-format sarif -o results.sarif junit.xml
+
+# Produce SARIF for coverage — flags files below 80% as warnings
+trep cov --output-format sarif --threshold 80 -o cov.sarif coverage.out
+```
+
+Upload in a workflow step:
+
+```yaml
+- uses: github/codeql-action/upload-sarif@v3
+  with:
+    sarif_file: results.sarif
+    category: test-results
+```
+
+Behaviour:
+- Test SARIF: each failing test case becomes a SARIF result with level `error`. File and line info are included when the input format provides them (e.g. GTest XML). Passing and skipped tests are omitted.
+- Coverage SARIF: when `--threshold` is set, every file below the threshold becomes a result with level `warning`. When no threshold is set, an empty results array is produced (which clears any previous GHAS alerts).
 
 ### JSON schema (test)
 
