@@ -99,6 +99,9 @@ func (o *reportOpts) run(_ *cobra.Command, _ []string) error {
 			return fmt.Errorf("unknown --annotate-platform %q: must be auto, github, or gitlab", o.annotatePlatform)
 		}
 	}
+	if err := validateThreshold("--threshold", o.threshold); err != nil {
+		return err
+	}
 
 	// ── Determine output paths ─────────────────────────────────────────────
 	pfx := o.prefix
