@@ -1,5 +1,9 @@
 # trep — Test Report Generator
 
+[![Go Report Card](https://goreportcard.com/badge/github.com/Yanujz/trep)](https://goreportcard.com/report/github.com/Yanujz/trep)
+[![Go Reference](https://pkg.go.dev/badge/github.com/Yanujz/trep.svg)](https://pkg.go.dev/github.com/Yanujz/trep)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+
 `trep` converts test result files into a **self-contained, searchable HTML report** with no
 external runtime dependencies. Drop it into any CI pipeline and get a clean, filterable
 view of your test run in one portable file.
