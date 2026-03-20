@@ -3,7 +3,7 @@ package model_test
 import (
 	"testing"
 
-	covmodel "github.com/trep-dev/trep/pkg/coverage/model"
+	covmodel "github.com/Yanujz/trep/pkg/coverage/model"
 )
 
 func TestFileCovCompute_Basic(t *testing.T) {

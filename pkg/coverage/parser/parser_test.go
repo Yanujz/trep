@@ -5,13 +5,13 @@ import (
 	"path/filepath"
 	"testing"
 
-	covparser "github.com/trep-dev/trep/pkg/coverage/parser"
+	covparser "github.com/Yanujz/trep/pkg/coverage/parser"
 
 	// Register all coverage parsers.
-	_ "github.com/trep-dev/trep/pkg/coverage/parser/clover"
-	_ "github.com/trep-dev/trep/pkg/coverage/parser/cobertura"
-	_ "github.com/trep-dev/trep/pkg/coverage/parser/gocover"
-	_ "github.com/trep-dev/trep/pkg/coverage/parser/lcov"
+	_ "github.com/Yanujz/trep/pkg/coverage/parser/clover"
+	_ "github.com/Yanujz/trep/pkg/coverage/parser/cobertura"
+	_ "github.com/Yanujz/trep/pkg/coverage/parser/gocover"
+	_ "github.com/Yanujz/trep/pkg/coverage/parser/lcov"
 )
 
 func TestForName_KnownFormats(t *testing.T) {

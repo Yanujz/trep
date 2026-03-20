@@ -10,8 +10,8 @@ import (
 	"strings"
 	"time"
 
-	covmodel "github.com/trep-dev/trep/pkg/coverage/model"
-	covparser "github.com/trep-dev/trep/pkg/coverage/parser"
+	covmodel "github.com/Yanujz/trep/pkg/coverage/model"
+	covparser "github.com/Yanujz/trep/pkg/coverage/parser"
 )
 
 func init() { covparser.Register(Parser{}) }

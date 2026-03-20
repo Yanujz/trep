@@ -6,8 +6,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/trep-dev/trep/pkg/model"
-	"github.com/trep-dev/trep/pkg/parser/gotest"
+	"github.com/Yanujz/trep/pkg/model"
+	"github.com/Yanujz/trep/pkg/parser/gotest"
 )
 
 var p = gotest.Parser{}

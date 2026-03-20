@@ -5,9 +5,9 @@ import (
 	"strings"
 	"testing"
 
-	covmodel "github.com/trep-dev/trep/pkg/coverage/model"
-	"github.com/trep-dev/trep/pkg/model"
-	"github.com/trep-dev/trep/pkg/render/annotations"
+	covmodel "github.com/Yanujz/trep/pkg/coverage/model"
+	"github.com/Yanujz/trep/pkg/model"
+	"github.com/Yanujz/trep/pkg/render/annotations"
 )
 
 // ── WriteTestAnnotations — GitHub ─────────────────────────────────────────────

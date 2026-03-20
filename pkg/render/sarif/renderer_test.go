@@ -7,9 +7,9 @@ import (
 	"testing"
 	"time"
 
-	covmodel "github.com/trep-dev/trep/pkg/coverage/model"
-	"github.com/trep-dev/trep/pkg/model"
-	"github.com/trep-dev/trep/pkg/render/sarif"
+	covmodel "github.com/Yanujz/trep/pkg/coverage/model"
+	"github.com/Yanujz/trep/pkg/model"
+	"github.com/Yanujz/trep/pkg/render/sarif"
 )
 
 // ── Helpers ───────────────────────────────────────────────────────────────────

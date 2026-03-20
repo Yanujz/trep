@@ -10,7 +10,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	covmodel "github.com/trep-dev/trep/pkg/coverage/model"
+	covmodel "github.com/Yanujz/trep/pkg/coverage/model"
 )
 
 // CovParser converts a specific coverage format into a [covmodel.CovReport].

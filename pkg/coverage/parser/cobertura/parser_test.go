@@ -4,9 +4,9 @@ import (
 	"strings"
 	"testing"
 
-	_ "github.com/trep-dev/trep/pkg/coverage/parser/cobertura"
+	_ "github.com/Yanujz/trep/pkg/coverage/parser/cobertura"
 
-	covparser "github.com/trep-dev/trep/pkg/coverage/parser"
+	covparser "github.com/Yanujz/trep/pkg/coverage/parser"
 )
 
 const basicCobertura = `<?xml version="1.0"?>

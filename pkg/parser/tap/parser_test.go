@@ -5,10 +5,10 @@ import (
 	"testing"
 	"time"
 
-	_ "github.com/trep-dev/trep/pkg/parser/tap"
+	_ "github.com/Yanujz/trep/pkg/parser/tap"
 
-	"github.com/trep-dev/trep/pkg/model"
-	"github.com/trep-dev/trep/pkg/parser"
+	"github.com/Yanujz/trep/pkg/model"
+	"github.com/Yanujz/trep/pkg/parser"
 )
 
 func parse(t *testing.T, input string) *model.Report {

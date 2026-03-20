@@ -5,10 +5,10 @@ import (
 	"testing"
 	"time"
 
-	_ "github.com/trep-dev/trep/pkg/parser/junit"
+	_ "github.com/Yanujz/trep/pkg/parser/junit"
 
-	"github.com/trep-dev/trep/pkg/model"
-	"github.com/trep-dev/trep/pkg/parser"
+	"github.com/Yanujz/trep/pkg/model"
+	"github.com/Yanujz/trep/pkg/parser"
 )
 
 func parse(t *testing.T, xml string) *model.Report {

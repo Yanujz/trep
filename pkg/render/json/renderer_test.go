@@ -6,9 +6,9 @@ import (
 	"testing"
 	"time"
 
-	covmodel "github.com/trep-dev/trep/pkg/coverage/model"
-	"github.com/trep-dev/trep/pkg/model"
-	jsonrender "github.com/trep-dev/trep/pkg/render/json"
+	covmodel "github.com/Yanujz/trep/pkg/coverage/model"
+	"github.com/Yanujz/trep/pkg/model"
+	jsonrender "github.com/Yanujz/trep/pkg/render/json"
 )
 
 func TestRenderTest_Summary(t *testing.T) {

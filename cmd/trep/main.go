@@ -11,15 +11,15 @@ import (
 	"github.com/spf13/cobra"
 
 	// Register test parsers.
-	_ "github.com/trep-dev/trep/pkg/parser/gotest"
-	_ "github.com/trep-dev/trep/pkg/parser/junit"
-	_ "github.com/trep-dev/trep/pkg/parser/tap"
+	_ "github.com/Yanujz/trep/pkg/parser/gotest"
+	_ "github.com/Yanujz/trep/pkg/parser/junit"
+	_ "github.com/Yanujz/trep/pkg/parser/tap"
 
 	// Register coverage parsers.
-	_ "github.com/trep-dev/trep/pkg/coverage/parser/clover"
-	_ "github.com/trep-dev/trep/pkg/coverage/parser/cobertura"
-	_ "github.com/trep-dev/trep/pkg/coverage/parser/gocover"
-	_ "github.com/trep-dev/trep/pkg/coverage/parser/lcov"
+	_ "github.com/Yanujz/trep/pkg/coverage/parser/clover"
+	_ "github.com/Yanujz/trep/pkg/coverage/parser/cobertura"
+	_ "github.com/Yanujz/trep/pkg/coverage/parser/gocover"
+	_ "github.com/Yanujz/trep/pkg/coverage/parser/lcov"
 )
 
 const version = "0.1.0"

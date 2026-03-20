@@ -11,13 +11,13 @@ import (
 
 	"github.com/spf13/cobra"
 
-	covmodel "github.com/trep-dev/trep/pkg/coverage/model"
-	covparser "github.com/trep-dev/trep/pkg/coverage/parser"
-	covhtml "github.com/trep-dev/trep/pkg/coverage/render/html"
-	"github.com/trep-dev/trep/pkg/delta"
-	"github.com/trep-dev/trep/pkg/render/annotations"
-	jsonrender "github.com/trep-dev/trep/pkg/render/json"
-	sarifrender "github.com/trep-dev/trep/pkg/render/sarif"
+	covmodel "github.com/Yanujz/trep/pkg/coverage/model"
+	covparser "github.com/Yanujz/trep/pkg/coverage/parser"
+	covhtml "github.com/Yanujz/trep/pkg/coverage/render/html"
+	"github.com/Yanujz/trep/pkg/delta"
+	"github.com/Yanujz/trep/pkg/render/annotations"
+	jsonrender "github.com/Yanujz/trep/pkg/render/json"
+	sarifrender "github.com/Yanujz/trep/pkg/render/sarif"
 )
 
 type covOpts struct {

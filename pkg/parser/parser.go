@@ -10,7 +10,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/trep-dev/trep/pkg/model"
+	"github.com/Yanujz/trep/pkg/model"
 )
 
 // Parser converts a specific test result format into a [model.Report].

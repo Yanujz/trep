@@ -10,8 +10,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/trep-dev/trep/pkg/delta"
-	"github.com/trep-dev/trep/pkg/model"
+	"github.com/Yanujz/trep/pkg/delta"
+	"github.com/Yanujz/trep/pkg/model"
 )
 
 //go:embed template.html

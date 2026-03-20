@@ -9,13 +9,13 @@ import (
 
 	"github.com/spf13/cobra"
 
-	covparser "github.com/trep-dev/trep/pkg/coverage/parser"
-	covhtml "github.com/trep-dev/trep/pkg/coverage/render/html"
-	"github.com/trep-dev/trep/pkg/delta"
-	"github.com/trep-dev/trep/pkg/model"
-	"github.com/trep-dev/trep/pkg/parser"
-	"github.com/trep-dev/trep/pkg/render/annotations"
-	htmlrender "github.com/trep-dev/trep/pkg/render/html"
+	covparser "github.com/Yanujz/trep/pkg/coverage/parser"
+	covhtml "github.com/Yanujz/trep/pkg/coverage/render/html"
+	"github.com/Yanujz/trep/pkg/delta"
+	"github.com/Yanujz/trep/pkg/model"
+	"github.com/Yanujz/trep/pkg/parser"
+	"github.com/Yanujz/trep/pkg/render/annotations"
+	htmlrender "github.com/Yanujz/trep/pkg/render/html"
 )
 
 type reportOpts struct {
