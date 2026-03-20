@@ -124,6 +124,8 @@ func Save(path string, snap *Snapshot) error {
 }
 
 // Load reads a snapshot from path.
+// It returns an error if the file cannot be read, the JSON is malformed, or
+// the snapshot version is newer than what this build supports.
 func Load(path string) (*Snapshot, error) {
 	data, err := os.ReadFile(path)
 	if err != nil {
@@ -132,6 +134,10 @@ func Load(path string) (*Snapshot, error) {
 	var snap Snapshot
 	if err := json.Unmarshal(data, &snap); err != nil {
 		return nil, fmt.Errorf("delta: parse baseline %s: %w", path, err)
+	}
+	if snap.Version > snapshotVersion {
+		return nil, fmt.Errorf("delta: snapshot %s uses version %d, this build supports up to %d",
+			path, snap.Version, snapshotVersion)
 	}
 	return &snap, nil
 }

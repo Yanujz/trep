@@ -8,26 +8,24 @@ view of your test run in one portable file.
 
 ## Features
 
-| | |
-|---|---|
-| **Multi-format input** | JUnit XML, Google Test XML, `go test -json`, TAP 12/13 |
-| **Auto-detection** | Extension + content sniffing — no `--format` needed in most cases |
-| **Multi-file merge** | Combine N result files into one unified report (or keep them separate with `--no-merge`) |
-| **Self-contained HTML** | Zero external dependencies — one file you can attach to a PR or email |
-| **Grouped + flat views** | Collapsible suite groups; click any header to sort flat |
-| **Live search & filter** | Debounced search across suite/test name; pass/fail/skip filter buttons |
-| **Pagination** | 200 tests / 50 suites per page; smart page-range widget |
-| **File/line links** | Google Test XML `file` and `line` attrs are preserved and shown inline |
-| **Slow test highlighting** | Tests in the top 10% of duration are highlighted in red |
-| **CI integration** | `--fail` exits 1 when any test failed; `--quiet` suppresses noise |
-| **Browser launch** | `--open` opens the report immediately after writing |
+- **Multi-format input** — JUnit XML, Google Test XML, `go test -json`, TAP 12/13
+- **Auto-detection** — extension + content sniffing; no `--format` needed in most cases
+- **Multi-file merge** — combine N result files into one unified report (or keep them separate with `--no-merge`)
+- **Self-contained HTML** — zero external dependencies; one file you can attach to a PR or email
+- **Grouped + flat views** — collapsible suite groups; click any header to sort flat
+- **Live search & filter** — debounced search across suite/test name; pass/fail/skip filter buttons
+- **Pagination** — 200 tests / 50 suites per page; smart page-range widget
+- **File/line links** — Google Test XML `file` and `line` attrs are preserved and shown inline
+- **Slow test highlighting** — tests in the top 10% of duration are highlighted
+- **CI integration** — `--fail` exits 1 when any test failed; `--quiet` suppresses noise
+- **Browser launch** — `--open` opens the report immediately after writing
 
 ---
 
 ## Installation
 
 ```sh
-git clone https://github.com/trep-dev/trep
+git clone https://github.com/Yanujz/trep
 cd trep
 go build -o trep ./cmd/trep/
 # Optional: put on PATH
@@ -53,13 +51,16 @@ Commands:
 
 | Flag | Short | Default | Description |
 |---|---|---|---|
-| `--output` | `-o` | `<input>.html` | Output HTML path; `-` for stdout |
-| `--format` | `-f` | `auto` | Force format: `junit` · `gtest` · `gotest` · `tap` |
+| `--output` | `-o` | `<input>.html` | Output file; `-` for stdout |
+| `--output-format` | | `html` | Output format: `html` or `json` |
+| `--format` | `-f` | `auto` | Force input format: `junit` · `gtest` · `gotest` · `tap` |
 | `--title` | `-t` | derived | Report title |
 | `--no-merge` | | `false` | One report per input instead of merging |
 | `--fail` | | `false` | Exit 1 when any tests failed |
 | `--open` | | `false` | Open in browser after writing |
 | `--quiet` | `-q` | `false` | Suppress stderr output |
+| `--annotate` | | `false` | Emit CI annotations for failed tests (GitHub/GitLab auto-detected) |
+| `--annotate-platform` | | `auto` | Annotation platform: `auto` · `github` · `gitlab` |
 | `--save-snapshot` | | | Write JSON snapshot for future delta comparison |
 | `--baseline` | | | JSON snapshot from a previous run (enables delta badges) |
 | `--baseline-label` | | | Human label for the baseline (e.g. `main`) |
@@ -68,14 +69,20 @@ Commands:
 
 | Flag | Short | Default | Description |
 |---|---|---|---|
-| `--output` | `-o` | `<input>.html` | Output HTML path |
-| `--format` | `-f` | `auto` | Force format: `lcov` · `gocover` · `cobertura` · `clover` |
+| `--output` | `-o` | `<input>.html` | Output file; `-` for stdout |
+| `--output-format` | | `html` | Output format: `html` or `json` |
+| `--format` | `-f` | `auto` | Force input format: `lcov` · `gocover` · `cobertura` · `clover` |
 | `--title` | `-t` | derived | Report title |
-| `--threshold` | | `0` (off) | Minimum line coverage %; draws red marker |
-| `--fail` | | `false` | Exit 1 if coverage is below `--threshold` |
+| `--threshold` | | `0` (off) | Minimum line coverage %; alias for `--threshold-line` |
+| `--threshold-line` | | `0` (off) | Minimum line coverage %; draws red marker |
+| `--threshold-branch` | | `0` (off) | Minimum branch coverage % |
+| `--threshold-func` | | `0` (off) | Minimum function coverage % |
+| `--fail` | | `false` | Exit 1 if any enabled threshold is not met |
 | `--strip-prefix` | | | Remove path prefix from all file paths |
 | `--open` | | `false` | Open in browser after writing |
 | `--quiet` | `-q` | `false` | Suppress stderr output |
+| `--annotate` | | `false` | Emit CI annotations for files below threshold |
+| `--annotate-platform` | | `auto` | Annotation platform: `auto` · `github` · `gitlab` |
 | `--save-snapshot` | | | Write JSON snapshot |
 | `--baseline` | | | Previous snapshot (enables delta badges) |
 | `--baseline-label` | | | Human label for the baseline |
@@ -97,6 +104,8 @@ Commands:
 | `--strip-prefix` | | | Remove path prefix from coverage file paths |
 | `--open` | | `false` | Open both reports in browser |
 | `--quiet` | `-q` | `false` | Suppress stderr output |
+| `--annotate` | | `false` | Emit CI annotations for failures and low-coverage files |
+| `--annotate-platform` | | `auto` | Annotation platform: `auto` · `github` · `gitlab` |
 | `--save-snapshot` | | | Write combined JSON snapshot |
 | `--baseline` | | | Previous snapshot |
 | `--baseline-label` | | | Baseline label |
@@ -191,21 +200,30 @@ Line-oriented `ok` / `not ok` records. Supports:
 ```
 trep/
 ├── cmd/trep/
-│   └── main.go                  # Cobra CLI, orchestration, browser launch
+│   ├── main.go          # CLI entry point, Cobra root, browser launch helpers
+│   ├── cmd_tests.go     # trep test subcommand
+│   ├── cmd_cov.go       # trep cov subcommand
+│   └── cmd_report.go    # trep report subcommand
 └── pkg/
     ├── model/
-    │   └── report.go            # Format-agnostic Report / Suite / TestCase types
+    │   └── report.go    # Format-agnostic Report / Suite / TestCase types
     ├── parser/
-    │   ├── parser.go            # Parser interface, registry, auto-detection
-    │   ├── junit/parser.go      # JUnit XML + Google Test XML (streaming)
-    │   ├── gotest/parser.go     # go test -json
-    │   └── tap/parser.go        # TAP v12/13
-    └── render/html/
-        ├── renderer.go          # HTML renderer (Go side)
-        └── template.html        # Embedded self-contained HTML template
+    │   ├── parser.go    # Parser interface, registry, auto-detection
+    │   ├── junit/       # JUnit XML + Google Test XML (streaming)
+    │   ├── gotest/      # go test -json
+    │   └── tap/         # TAP v12/13
+    ├── coverage/
+    │   ├── model/       # CovReport / FileCov types
+    │   ├── parser/      # CovParser interface + lcov / gocover / cobertura / clover
+    │   └── render/html/ # Coverage HTML renderer
+    ├── delta/           # Snapshot save/load and run-over-run delta computation
+    └── render/
+        ├── html/        # Test HTML renderer
+        ├── json/        # Structured JSON output
+        └── annotations/ # GitHub / GitLab CI annotation lines
 ```
 
-Adding a new format is two steps:
+Adding a new test format is two steps:
 1. Create `pkg/parser/<name>/parser.go` implementing `parser.Parser`
 2. Add a blank import in `cmd/trep/main.go` — the `init()` self-registers it
 
@@ -237,9 +255,9 @@ scripts, fonts, or stylesheets.
     trep report \
       --tests build/test-results.xml \
       --cov build/coverage.out \
-      --threshold-line 80 \
+      --threshold 80 \
       --fail-tests --fail-cov \
-      --annotate \                   # inline PR annotations
+      --annotate \
       --output-dir dist/ \
       --prefix ci \
       --baseline .trep/baseline.json \
@@ -262,7 +280,7 @@ test:
     - trep report
         --tests results.json
         --cov coverage.out
-        --threshold-line 80
+        --threshold 80
         --fail-tests --fail-cov
         --annotate --annotate-platform gitlab
         --output-dir public/
