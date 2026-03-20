@@ -36,6 +36,7 @@ func main() {
 		newTestCmd(),
 		newCovCmd(),
 		newReportCmd(),
+		newCompletionCmd(root),
 	)
 
 	if err := root.Execute(); err != nil {
