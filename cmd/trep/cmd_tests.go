@@ -12,25 +12,25 @@ import (
 	"github.com/trep-dev/trep/pkg/model"
 	"github.com/trep-dev/trep/pkg/parser"
 	"github.com/trep-dev/trep/pkg/render/annotations"
+	htmlrender "github.com/trep-dev/trep/pkg/render/html"
 	jsonrender "github.com/trep-dev/trep/pkg/render/json"
 	sarifrender "github.com/trep-dev/trep/pkg/render/sarif"
-	htmlrender "github.com/trep-dev/trep/pkg/render/html"
 )
 
 type testOpts struct {
-	output        string
-	outFormat     string // "html" | "json"
-	format        string
-	title         string
-	noMerge       bool
-	failCI        bool
-	open          bool
-	quiet         bool
-	annotate      bool
+	output           string
+	outFormat        string // "html" | "json"
+	format           string
+	title            string
+	noMerge          bool
+	failCI           bool
+	open             bool
+	quiet            bool
+	annotate         bool
 	annotatePlatform string
-	saveSnapshot  string
-	baseline      string
-	baselineLabel string
+	saveSnapshot     string
+	baseline         string
+	baselineLabel    string
 	// set by report command when producing a linked pair
 	covReportURL string
 }
@@ -68,19 +68,19 @@ Examples
 	}
 
 	f := cmd.Flags()
-	f.StringVarP(&o.output,   "output",        "o", "",     "output file (default: first input .html or .json; '-' for stdout)")
-	f.StringVar (&o.outFormat,"output-format",       "html", "output format: html | json | sarif")
-	f.StringVarP(&o.format,   "format",        "f", "auto", "force input format: auto | junit | gtest | gotest | tap")
-	f.StringVarP(&o.title,    "title",         "t", "",     "report title")
-	f.BoolVar   (&o.noMerge,  "no-merge",            false, "one report per input instead of merging")
-	f.BoolVar   (&o.failCI,   "fail",                false, "exit 1 when any tests failed")
-	f.BoolVar   (&o.open,     "open",                false, "open the report in the browser after writing")
-	f.BoolVarP  (&o.quiet,    "quiet",         "q", false,  "suppress progress output")
-	f.BoolVar   (&o.annotate, "annotate",            false, "emit CI annotations for failed tests (GitHub/GitLab auto-detected)")
-	f.StringVar (&o.annotatePlatform, "annotate-platform", "auto", "annotation platform: auto | github | gitlab")
-	f.StringVar (&o.saveSnapshot, "save-snapshot", "",       "write run snapshot JSON for future delta comparison")
-	f.StringVar (&o.baseline,     "baseline",      "",       "JSON snapshot from a previous run (enables delta badges)")
-	f.StringVar (&o.baselineLabel,"baseline-label","",       "human label for the baseline (e.g. 'main')")
+	f.StringVarP(&o.output, "output", "o", "", "output file (default: first input .html or .json; '-' for stdout)")
+	f.StringVar(&o.outFormat, "output-format", "html", "output format: html | json | sarif")
+	f.StringVarP(&o.format, "format", "f", "auto", "force input format: auto | junit | gtest | gotest | tap")
+	f.StringVarP(&o.title, "title", "t", "", "report title")
+	f.BoolVar(&o.noMerge, "no-merge", false, "one report per input instead of merging")
+	f.BoolVar(&o.failCI, "fail", false, "exit 1 when any tests failed")
+	f.BoolVar(&o.open, "open", false, "open the report in the browser after writing")
+	f.BoolVarP(&o.quiet, "quiet", "q", false, "suppress progress output")
+	f.BoolVar(&o.annotate, "annotate", false, "emit CI annotations for failed tests (GitHub/GitLab auto-detected)")
+	f.StringVar(&o.annotatePlatform, "annotate-platform", "auto", "annotation platform: auto | github | gitlab")
+	f.StringVar(&o.saveSnapshot, "save-snapshot", "", "write run snapshot JSON for future delta comparison")
+	f.StringVar(&o.baseline, "baseline", "", "JSON snapshot from a previous run (enables delta badges)")
+	f.StringVar(&o.baselineLabel, "baseline-label", "", "human label for the baseline (e.g. 'main')")
 
 	return cmd
 }
@@ -122,7 +122,7 @@ func (o *testOpts) run(_ *cobra.Command, args []string) error {
 	}
 
 	anyFailed := false
-	renderer  := htmlrender.Renderer{}
+	renderer := htmlrender.Renderer{}
 
 	for i, rep := range reports {
 		_, _, failed, _ := rep.Stats()

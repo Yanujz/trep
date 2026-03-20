@@ -2,15 +2,15 @@
 package html
 
 import (
-	_ "embed"
+	_ "embed" // for go:embed directive
 	"encoding/json"
+	"fmt"
 	htmlpkg "html"
 	"io"
 	"math"
 	"path/filepath"
 	"sort"
 	"strings"
-	"fmt"
 	"time"
 
 	covmodel "github.com/trep-dev/trep/pkg/coverage/model"
@@ -22,18 +22,19 @@ var templateHTML string
 
 // Options controls optional rendering features.
 type Options struct {
-	Title          string
+	Title           string
 	ThresholdLine   float64 // 0 = disabled; minimum acceptable line coverage %
 	ThresholdBranch float64 // 0 = disabled; minimum acceptable branch coverage %
 	ThresholdFunc   float64 // 0 = disabled; minimum acceptable function coverage %
-	TestReportURL  string  // cross-link to test report page
-	Delta          *delta.Delta
-	BaselineLabel  string
+	TestReportURL   string  // cross-link to test report page
+	Delta           *delta.Delta
+	BaselineLabel   string
 }
 
 // Renderer produces a self-contained HTML coverage report.
 type Renderer struct{}
 
+// Name returns the renderer name.
 func (Renderer) Name() string { return "html-cov" }
 
 // Render writes a fully self-contained HTML coverage page to w.
@@ -45,17 +46,17 @@ func (Renderer) Render(w io.Writer, rep *covmodel.CovReport, opts Options) error
 	//              branchPct, branchCov, branchTotal,
 	//              funcPct,   funcCov,   funcTotal]
 	type fileRow struct {
-		Path         string
-		Dir          string
-		LinePct      float64
-		LinesCov     int
-		LinesTotal   int
-		BranchPct    float64
-		BranchCov    int
-		BranchTotal  int
-		FuncPct      float64
-		FuncCov      int
-		FuncTotal    int
+		Path        string
+		Dir         string
+		LinePct     float64
+		LinesCov    int
+		LinesTotal  int
+		BranchPct   float64
+		BranchCov   int
+		BranchTotal int
+		FuncPct     float64
+		FuncCov     int
+		FuncTotal   int
 	}
 
 	rows := make([]fileRow, 0, len(rep.Files))
@@ -111,9 +112,9 @@ func (Renderer) Render(w io.Writer, rep *covmodel.CovReport, opts Options) error
 	}
 
 	// Overall stats.
-	linePct   := round2(safePct(lc, lt))
+	linePct := round2(safePct(lc, lt))
 	branchPct := round2(safePct(bc, bt))
-	funcPct   := round2(safePct(fc, ft))
+	funcPct := round2(safePct(fc, ft))
 
 	// Threshold marker.
 	thresh := opts.ThresholdLine
@@ -127,15 +128,15 @@ func (Renderer) Render(w io.Writer, rep *covmodel.CovReport, opts Options) error
 	if opts.Delta != nil {
 		d := opts.Delta
 		type dj struct {
-			HasTests     bool               `json:"hasTests"`
-			FailedDelta  int                `json:"failedDelta"`
-			PassedDelta  int                `json:"passedDelta"`
-			HasCoverage  bool               `json:"hasCoverage"`
-			LinesPct     float64            `json:"linesPct"`
-			BranchPct    float64            `json:"branchPct"`
-			FuncPct      float64            `json:"funcPct"`
-			BaseLabel    string             `json:"baseLabel"`
-			Files        map[string]float64 `json:"files,omitempty"`
+			HasTests    bool               `json:"hasTests"`
+			FailedDelta int                `json:"failedDelta"`
+			PassedDelta int                `json:"passedDelta"`
+			HasCoverage bool               `json:"hasCoverage"`
+			LinesPct    float64            `json:"linesPct"`
+			BranchPct   float64            `json:"branchPct"`
+			FuncPct     float64            `json:"funcPct"`
+			BaseLabel   string             `json:"baseLabel"`
+			Files       map[string]float64 `json:"files,omitempty"`
 		}
 		raw, _ := json.Marshal(dj{
 			HasTests:    d.HasTests,
@@ -157,36 +158,36 @@ func (Renderer) Render(w io.Writer, rep *covmodel.CovReport, opts Options) error
 	// Status badge.
 	belowThreshold := thresh > 0 && linePct < thresh
 	statusLabel := "PASS"
-	statusCls   := "b-pass"
+	statusCls := "b-pass"
 	if belowThreshold {
 		statusLabel = "BELOW THRESHOLD"
-		statusCls   = "b-fail"
+		statusCls = "b-fail"
 	}
 
 	pct := func(n, d int) string { return fmt.Sprintf("%.1f", safePct(n, d)) }
 
 	r := strings.NewReplacer(
-		"%%TITLE%%",       htmlpkg.EscapeString(title),
-		"%%TS%%",          htmlpkg.EscapeString(tsStr),
-		"%%STATUS%%",      statusLabel,
-		"%%STATUS_CLS%%",  statusCls,
-		"%%LINE_PCT%%",    fmt.Sprintf("%.1f", linePct),
-		"%%LINE_COV%%",    fmt.Sprintf("%d", lc),
-		"%%LINE_TOTAL%%",  fmt.Sprintf("%d", lt),
-		"%%BRANCH_PCT%%",  fmt.Sprintf("%.1f", branchPct),
-		"%%BRANCH_COV%%",  fmt.Sprintf("%d", bc),
+		"%%TITLE%%", htmlpkg.EscapeString(title),
+		"%%TS%%", htmlpkg.EscapeString(tsStr),
+		"%%STATUS%%", statusLabel,
+		"%%STATUS_CLS%%", statusCls,
+		"%%LINE_PCT%%", fmt.Sprintf("%.1f", linePct),
+		"%%LINE_COV%%", fmt.Sprintf("%d", lc),
+		"%%LINE_TOTAL%%", fmt.Sprintf("%d", lt),
+		"%%BRANCH_PCT%%", fmt.Sprintf("%.1f", branchPct),
+		"%%BRANCH_COV%%", fmt.Sprintf("%d", bc),
 		"%%BRANCH_TOTAL%%", fmt.Sprintf("%d", bt),
-		"%%FUNC_PCT%%",    fmt.Sprintf("%.1f", funcPct),
-		"%%FUNC_COV%%",    fmt.Sprintf("%d", fc),
-		"%%FUNC_TOTAL%%",  fmt.Sprintf("%d", ft),
-		"%%FILE_COUNT%%",  fmt.Sprintf("%d", len(rep.Files)),
-		"%%PCT_LINE%%",    pct(lc, lt),
-		"%%PCT_BRANCH%%",  pct(bc, bt),
-		"%%PCT_FUNC%%",    pct(fc, ft),
-		"%%THRESHOLD%%",   threshStr,
-		"%%DELTA%%",       deltaStr,
-		"%%TEST_URL%%",    testURL,
-		"%%DATA%%",        dataStr,
+		"%%FUNC_PCT%%", fmt.Sprintf("%.1f", funcPct),
+		"%%FUNC_COV%%", fmt.Sprintf("%d", fc),
+		"%%FUNC_TOTAL%%", fmt.Sprintf("%d", ft),
+		"%%FILE_COUNT%%", fmt.Sprintf("%d", len(rep.Files)),
+		"%%PCT_LINE%%", pct(lc, lt),
+		"%%PCT_BRANCH%%", pct(bc, bt),
+		"%%PCT_FUNC%%", pct(fc, ft),
+		"%%THRESHOLD%%", threshStr,
+		"%%DELTA%%", deltaStr,
+		"%%TEST_URL%%", testURL,
+		"%%DATA%%", dataStr,
 	)
 
 	_, err = io.WriteString(w, r.Replace(templateHTML))

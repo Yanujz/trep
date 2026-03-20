@@ -24,15 +24,15 @@ type CovParser interface {
 var (
 	registry []CovParser
 	aliases  = map[string]string{
-		"go":         "gocover",
-		"go-cover":   "gocover",
+		"go":           "gocover",
+		"go-cover":     "gocover",
 		"coverprofile": "gocover",
-		"lcov":       "lcov",
-		"info":       "lcov",
-		"cobertura":  "cobertura",
-		"jacoco":     "cobertura",
-		"xml":        "cobertura",
-		"clover":     "clover",
+		"lcov":         "lcov",
+		"info":         "lcov",
+		"cobertura":    "cobertura",
+		"jacoco":       "cobertura",
+		"xml":          "cobertura",
+		"clover":       "clover",
 	}
 )
 

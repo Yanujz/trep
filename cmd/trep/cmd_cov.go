@@ -11,33 +11,33 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/trep-dev/trep/pkg/render/annotations"
+	covmodel "github.com/trep-dev/trep/pkg/coverage/model"
 	covparser "github.com/trep-dev/trep/pkg/coverage/parser"
 	covhtml "github.com/trep-dev/trep/pkg/coverage/render/html"
-	covmodel "github.com/trep-dev/trep/pkg/coverage/model"
 	"github.com/trep-dev/trep/pkg/delta"
+	"github.com/trep-dev/trep/pkg/render/annotations"
 	jsonrender "github.com/trep-dev/trep/pkg/render/json"
 	sarifrender "github.com/trep-dev/trep/pkg/render/sarif"
 )
 
 type covOpts struct {
-	output          string
-	outFormat       string // "html" | "json"
-	format          string
-	title           string
-	thresholdLine   float64
-	thresholdBranch float64
-	thresholdFunc   float64
-	failCI          bool
-	open            bool
-	quiet           bool
-	stripPrefix     string
-	exclude         []string
-	annotate        bool
+	output           string
+	outFormat        string // "html" | "json"
+	format           string
+	title            string
+	thresholdLine    float64
+	thresholdBranch  float64
+	thresholdFunc    float64
+	failCI           bool
+	open             bool
+	quiet            bool
+	stripPrefix      string
+	exclude          []string
+	annotate         bool
 	annotatePlatform string
-	saveSnapshot    string
-	baseline        string
-	baselineLabel   string
+	saveSnapshot     string
+	baseline         string
+	baselineLabel    string
 	// set by report command when producing a linked pair
 	testReportURL string
 }
@@ -80,25 +80,25 @@ Examples
 	}
 
 	f := cmd.Flags()
-	f.StringVarP(&o.output,          "output",           "o", "",      "output file (default: input .html or .json; '-' for stdout)")
-	f.StringVar (&o.outFormat,        "output-format",         "html",  "output format: html | json | sarif")
-	f.StringVarP(&o.format,           "format",           "f", "auto",  "force input format: auto | lcov | gocover | cobertura | clover")
-	f.StringVarP(&o.title,            "title",            "t", "",      "report title")
-	f.Float64Var(&o.thresholdLine,    "threshold-line",         0,      "minimum line coverage %   (0 = disabled)")
-	f.Float64Var(&o.thresholdBranch,  "threshold-branch",       0,      "minimum branch coverage % (0 = disabled)")
-	f.Float64Var(&o.thresholdFunc,    "threshold-func",         0,      "minimum function coverage %(0 = disabled)")
+	f.StringVarP(&o.output, "output", "o", "", "output file (default: input .html or .json; '-' for stdout)")
+	f.StringVar(&o.outFormat, "output-format", "html", "output format: html | json | sarif")
+	f.StringVarP(&o.format, "format", "f", "auto", "force input format: auto | lcov | gocover | cobertura | clover")
+	f.StringVarP(&o.title, "title", "t", "", "report title")
+	f.Float64Var(&o.thresholdLine, "threshold-line", 0, "minimum line coverage %   (0 = disabled)")
+	f.Float64Var(&o.thresholdBranch, "threshold-branch", 0, "minimum branch coverage % (0 = disabled)")
+	f.Float64Var(&o.thresholdFunc, "threshold-func", 0, "minimum function coverage %(0 = disabled)")
 	// Convenience alias: --threshold sets line threshold.
-	f.Float64Var(&o.thresholdLine,    "threshold",              0,      "alias for --threshold-line")
-	f.BoolVar   (&o.failCI,           "fail",                   false,  "exit 1 when any threshold is not met")
-	f.BoolVar   (&o.open,             "open",                   false,  "open the report in the browser after writing")
-	f.BoolVarP  (&o.quiet,            "quiet",            "q", false,   "suppress progress output")
-	f.StringVar (&o.stripPrefix,      "strip-prefix",           "",     "remove this prefix from all file paths")
-	f.StringArrayVar(&o.exclude,       "exclude",                nil,    "glob pattern for paths to exclude (repeatable, e.g. 'vendor/**')")
-	f.BoolVar   (&o.annotate,         "annotate",               false,  "emit CI annotations for files below threshold")
-	f.StringVar (&o.annotatePlatform, "annotate-platform",      "auto", "annotation platform: auto | github | gitlab")
-	f.StringVar (&o.saveSnapshot,     "save-snapshot",           "",    "write run snapshot JSON for future delta comparison")
-	f.StringVar (&o.baseline,         "baseline",                "",    "JSON snapshot from a previous run (enables delta badges)")
-	f.StringVar (&o.baselineLabel,    "baseline-label",          "",    "human label for the baseline")
+	f.Float64Var(&o.thresholdLine, "threshold", 0, "alias for --threshold-line")
+	f.BoolVar(&o.failCI, "fail", false, "exit 1 when any threshold is not met")
+	f.BoolVar(&o.open, "open", false, "open the report in the browser after writing")
+	f.BoolVarP(&o.quiet, "quiet", "q", false, "suppress progress output")
+	f.StringVar(&o.stripPrefix, "strip-prefix", "", "remove this prefix from all file paths")
+	f.StringArrayVar(&o.exclude, "exclude", nil, "glob pattern for paths to exclude (repeatable, e.g. 'vendor/**')")
+	f.BoolVar(&o.annotate, "annotate", false, "emit CI annotations for files below threshold")
+	f.StringVar(&o.annotatePlatform, "annotate-platform", "auto", "annotation platform: auto | github | gitlab")
+	f.StringVar(&o.saveSnapshot, "save-snapshot", "", "write run snapshot JSON for future delta comparison")
+	f.StringVar(&o.baseline, "baseline", "", "JSON snapshot from a previous run (enables delta badges)")
+	f.StringVar(&o.baselineLabel, "baseline-label", "", "human label for the baseline")
 
 	return cmd
 }

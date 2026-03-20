@@ -12,10 +12,10 @@ type LineCov struct {
 
 // BranchCov records one branch outcome (true/false side of a conditional).
 type BranchCov struct {
-	Line   int
-	Block  int
-	Index  int
-	Taken  int // -1 = not reachable, 0 = not taken, >0 = taken count
+	Line  int
+	Block int
+	Index int
+	Taken int // -1 = not reachable, 0 = not taken, >0 = taken count
 }
 
 // FuncCov records call-count data for one function.
@@ -142,7 +142,6 @@ func (r *CovReport) Merge(other *CovReport) {
 		}
 	}
 }
-
 
 func safePct(covered, total int) float64 {
 	if total == 0 {

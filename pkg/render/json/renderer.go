@@ -20,6 +20,7 @@ type TestOutput struct {
 	Suites      []SuiteOutput `json:"suites"`
 }
 
+// TestSummary holds aggregate counts for a test report.
 type TestSummary struct {
 	Total   int     `json:"total"`
 	Passed  int     `json:"passed"`
@@ -28,18 +29,20 @@ type TestSummary struct {
 	PassPct float64 `json:"pass_pct"`
 }
 
+// SuiteOutput is the JSON representation of a test suite.
 type SuiteOutput struct {
 	Name  string       `json:"name"`
 	Cases []CaseOutput `json:"cases"`
 }
 
+// CaseOutput is the JSON representation of a single test case.
 type CaseOutput struct {
-	Name     string  `json:"name"`
-	Status   string  `json:"status"`
-	DurationMs int64 `json:"duration_ms"`
-	Message  string  `json:"message,omitempty"`
-	File     string  `json:"file,omitempty"`
-	Line     int     `json:"line,omitempty"`
+	Name       string `json:"name"`
+	Status     string `json:"status"`
+	DurationMs int64  `json:"duration_ms"`
+	Message    string `json:"message,omitempty"`
+	File       string `json:"file,omitempty"`
+	Line       int    `json:"line,omitempty"`
 }
 
 // RenderTest writes a JSON test report to w.
@@ -90,6 +93,7 @@ type CovOutput struct {
 	Files       []FileOutput `json:"files"`
 }
 
+// CovSummary holds aggregate coverage statistics for a coverage report.
 type CovSummary struct {
 	LinesPct    float64 `json:"lines_pct"`
 	LinesCov    int     `json:"lines_covered"`
@@ -103,6 +107,7 @@ type CovSummary struct {
 	FileCount   int     `json:"file_count"`
 }
 
+// FileOutput is the JSON representation of per-file coverage data.
 type FileOutput struct {
 	Path        string  `json:"path"`
 	LinesPct    float64 `json:"lines_pct"`
@@ -138,19 +143,19 @@ func RenderCov(w io.Writer, rep *covmodel.CovReport) error {
 
 	for _, f := range rep.Files {
 		fo := FileOutput{
-			Path:      f.Path,
-			LinesPct:  f.LinePct(),
-			LinesCov:  f.LinesCovered,
+			Path:       f.Path,
+			LinesPct:   f.LinePct(),
+			LinesCov:   f.LinesCovered,
 			LinesTotal: f.LinesTotal,
 		}
 		if f.BranchTotal > 0 {
-			fo.BranchPct   = f.BranchPct()
-			fo.BranchCov   = f.BranchCovered
+			fo.BranchPct = f.BranchPct()
+			fo.BranchCov = f.BranchCovered
 			fo.BranchTotal = f.BranchTotal
 		}
 		if f.FuncTotal > 0 {
-			fo.FuncPct   = f.FuncPct()
-			fo.FuncCov   = f.FuncCovered
+			fo.FuncPct = f.FuncPct()
+			fo.FuncCov = f.FuncCovered
 			fo.FuncTotal = f.FuncTotal
 		}
 		out.Files = append(out.Files, fo)

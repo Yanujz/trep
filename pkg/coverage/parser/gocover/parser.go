@@ -19,8 +19,13 @@ func init() { covparser.Register(Parser{}) }
 // Parser handles Go coverage profiles.
 type Parser struct{}
 
-func (Parser) Name() string         { return "gocover" }
+// Name returns the parser identifier.
+func (Parser) Name() string { return "gocover" }
+
+// Extensions returns the file extensions this parser handles.
 func (Parser) Extensions() []string { return []string{"out"} }
+
+// Detect reports whether header looks like a Go coverage profile.
 func (Parser) Detect(header []byte) bool {
 	s := strings.TrimSpace(string(header))
 	return strings.HasPrefix(s, "mode: set") ||
@@ -28,9 +33,11 @@ func (Parser) Detect(header []byte) bool {
 		strings.HasPrefix(s, "mode: atomic")
 }
 
-// A Go coverprofile line looks like:
-//   github.com/example/pkg/file.go:10.15,12.3 2 1
-//                                              ^stmts ^count
+// Parse reads a Go coverage profile from r and returns a CovReport.
+// A coverprofile line looks like:
+//
+//	github.com/example/pkg/file.go:10.15,12.3 2 1
+//	                                           ^stmts ^count
 func (Parser) Parse(r io.Reader, source string) (*covmodel.CovReport, error) {
 	rep := &covmodel.CovReport{
 		Sources:   []string{source},
@@ -42,7 +49,7 @@ func (Parser) Parse(r io.Reader, source string) (*covmodel.CovReport, error) {
 		startLine, endLine int
 		stmts, count       int
 	}
-	fileMap   := map[string][]block{}
+	fileMap := map[string][]block{}
 	fileOrder := []string{}
 
 	sc := bufio.NewScanner(r)
@@ -73,9 +80,9 @@ func (Parser) Parse(r io.Reader, source string) (*covmodel.CovReport, error) {
 		}
 
 		startLine, err1 := parseLineCol(coords[0])
-		endLine, err2   := parseLineCol(coords[1])
-		stmts, err3     := strconv.Atoi(parts[1])
-		count, err4     := strconv.Atoi(parts[2])
+		endLine, err2 := parseLineCol(coords[1])
+		stmts, err3 := strconv.Atoi(parts[1])
+		count, err4 := strconv.Atoi(parts[2])
 		if err1 != nil || err2 != nil || err3 != nil || err4 != nil {
 			continue
 		}

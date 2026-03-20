@@ -19,8 +19,13 @@ func init() { covparser.Register(Parser{}) }
 // Parser handles Cobertura XML files.
 type Parser struct{}
 
-func (Parser) Name() string         { return "cobertura" }
+// Name returns the parser identifier.
+func (Parser) Name() string { return "cobertura" }
+
+// Extensions returns the file extensions this parser handles.
 func (Parser) Extensions() []string { return []string{"xml"} }
+
+// Detect reports whether header looks like a Cobertura XML file.
 func (Parser) Detect(header []byte) bool {
 	s := strings.ToLower(string(header))
 	return strings.Contains(s, "<coverage") && strings.Contains(s, "line-rate")
@@ -39,28 +44,29 @@ type xmlPackage struct {
 }
 
 type xmlClass struct {
-	Name     string    `xml:"name,attr"`
-	Filename string    `xml:"filename,attr"`
+	Name     string      `xml:"name,attr"`
+	Filename string      `xml:"filename,attr"`
 	Methods  []xmlMethod `xml:"methods>method"`
-	Lines    []xmlLine `xml:"lines>line"`
+	Lines    []xmlLine   `xml:"lines>line"`
 }
 
 type xmlMethod struct {
-	Name string    `xml:"name,attr"`
-	Line string    `xml:"line,attr"`
-	Hits string    `xml:"hits,attr"`
+	Name  string    `xml:"name,attr"`
+	Line  string    `xml:"line,attr"`
+	Hits  string    `xml:"hits,attr"`
 	Lines []xmlLine `xml:"lines>line"`
 }
 
 type xmlLine struct {
-	Number string `xml:"number,attr"`
-	Hits   string `xml:"hits,attr"`
-	Branch string `xml:"branch,attr"`       // "true"/"false"
+	Number       string `xml:"number,attr"`
+	Hits         string `xml:"hits,attr"`
+	Branch       string `xml:"branch,attr"`             // "true"/"false"
 	CondCoverage string `xml:"condition-coverage,attr"` // "50% (1/2)"
 }
 
 // ── Parser ────────────────────────────────────────────────────────────────────
 
+// Parse reads a Cobertura XML file from r and returns a CovReport.
 func (Parser) Parse(r io.Reader, source string) (*covmodel.CovReport, error) {
 	var cov xmlCoverage
 	dec := xml.NewDecoder(r)
@@ -83,7 +89,7 @@ func (Parser) Parse(r io.Reader, source string) (*covmodel.CovReport, error) {
 			// Methods → FuncCov
 			for _, m := range cls.Methods {
 				lineNo, _ := strconv.Atoi(m.Line)
-				hits, _   := strconv.Atoi(m.Hits)
+				hits, _ := strconv.Atoi(m.Hits)
 				fc.Funcs = append(fc.Funcs, covmodel.FuncCov{
 					Name:  m.Name,
 					Line:  lineNo,

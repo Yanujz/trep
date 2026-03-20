@@ -2,7 +2,7 @@
 package html
 
 import (
-	_ "embed"
+	_ "embed" // for go:embed directive
 	"encoding/json"
 	"fmt"
 	htmlpkg "html"
@@ -19,8 +19,8 @@ var templateHTML string
 
 // Options controls optional rendering features.
 type Options struct {
-	CovReportURL string // cross-link to coverage page
-	Delta        *delta.Delta
+	CovReportURL  string // cross-link to coverage page
+	Delta         *delta.Delta
 	BaselineLabel string
 }
 
@@ -90,10 +90,10 @@ func (Renderer) Render(w io.Writer, rep *model.Report, opts Options) error {
 	}
 
 	// Overall status
-	status    := "PASSED"
+	status := "PASSED"
 	statusCls := "b-pass"
 	if failed > 0 {
-		status    = "FAILED"
+		status = "FAILED"
 		statusCls = "b-fail"
 	}
 
@@ -144,21 +144,21 @@ func (Renderer) Render(w io.Writer, rep *model.Report, opts Options) error {
 	covURL := htmlpkg.EscapeString(opts.CovReportURL)
 
 	r := strings.NewReplacer(
-		"%%TITLE%%",      htmlpkg.EscapeString(title),
-		"%%STATUS%%",     status,
+		"%%TITLE%%", htmlpkg.EscapeString(title),
+		"%%STATUS%%", status,
 		"%%STATUS_CLS%%", statusCls,
-		"%%TS%%",         htmlpkg.EscapeString(tsStr),
-		"%%ELAPSED%%",    htmlpkg.EscapeString(elapsed),
-		"%%TOTAL%%",      fmt.Sprintf("%d", total),
-		"%%PASSED%%",     fmt.Sprintf("%d", passed),
-		"%%FAILED%%",     fmt.Sprintf("%d", failed),
-		"%%SKIPPED%%",    fmt.Sprintf("%d", skipped),
-		"%%PCT_PASS%%",   pct(passed, total),
-		"%%PCT_FAIL%%",   pct(failed, total),
-		"%%PCT_SKIP%%",   pct(skipped, total),
-		"%%DELTA%%",      deltaStr,
-		"%%COV_URL%%",    covURL,
-		"%%DATA%%",       dataStr,
+		"%%TS%%", htmlpkg.EscapeString(tsStr),
+		"%%ELAPSED%%", htmlpkg.EscapeString(elapsed),
+		"%%TOTAL%%", fmt.Sprintf("%d", total),
+		"%%PASSED%%", fmt.Sprintf("%d", passed),
+		"%%FAILED%%", fmt.Sprintf("%d", failed),
+		"%%SKIPPED%%", fmt.Sprintf("%d", skipped),
+		"%%PCT_PASS%%", pct(passed, total),
+		"%%PCT_FAIL%%", pct(failed, total),
+		"%%PCT_SKIP%%", pct(skipped, total),
+		"%%DELTA%%", deltaStr,
+		"%%COV_URL%%", covURL,
+		"%%DATA%%", dataStr,
 	)
 
 	_, err = io.WriteString(w, r.Replace(templateHTML))

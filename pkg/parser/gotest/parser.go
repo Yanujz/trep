@@ -17,8 +17,13 @@ func init() { parser.Register(Parser{}) }
 // Parser handles `go test -json` output.
 type Parser struct{}
 
-func (Parser) Name() string         { return "gotest" }
+// Name returns the parser identifier.
+func (Parser) Name() string { return "gotest" }
+
+// Extensions returns the file extensions this parser handles.
 func (Parser) Extensions() []string { return []string{} } // typically piped via stdin
+
+// Detect reports whether header looks like go test -json output.
 func (Parser) Detect(header []byte) bool {
 	s := string(header)
 	// The JSON stream uses "Action" and "Package" keys on every line.
@@ -35,6 +40,7 @@ type event struct {
 	Output  string    `json:"Output"`
 }
 
+// Parse reads go test -json output from r and returns a Report.
 func (Parser) Parse(r io.Reader, source string) (*model.Report, error) {
 	rep := &model.Report{
 		Sources:   []string{source},
@@ -44,8 +50,8 @@ func (Parser) Parse(r io.Reader, source string) (*model.Report, error) {
 	type key struct{ pkg, test string }
 	type state struct{ buf strings.Builder }
 
-	states     := make(map[key]*state)
-	suiteMap   := make(map[string]*model.Suite)
+	states := make(map[key]*state)
+	suiteMap := make(map[string]*model.Suite)
 	suiteOrder := []string{}
 	var maxElapsed float64
 
@@ -106,13 +112,13 @@ func (Parser) Parse(r io.Reader, source string) (*model.Report, error) {
 				c.Status = model.StatusPass
 
 			case "skip":
-				c.Status  = model.StatusSkip
+				c.Status = model.StatusSkip
 				c.Message = extractSkipReason(rawOut)
 
 			case "fail":
-				c.Status  = model.StatusFail
+				c.Status = model.StatusFail
 				c.Message = extractFailMessage(rawOut)
-				c.Stdout  = strings.TrimSpace(rawOut)
+				c.Stdout = strings.TrimSpace(rawOut)
 			}
 
 			ensureSuite(suiteMap, &suiteOrder, suiteName)
