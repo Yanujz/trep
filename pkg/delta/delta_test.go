@@ -31,15 +31,25 @@ func TestFromTestReport(t *testing.T) {
 func TestFromCovReport(t *testing.T) {
 	rep := &covmodel.CovReport{
 		Files: []*covmodel.FileCov{
-			{LinesTotal: 100, LinesCovered: 80},
+			{Path: "pkg/foo.go", LinesTotal: 100, LinesCovered: 80},
+			{Path: "pkg/bar.go", LinesTotal: 50, LinesCovered: 25},
 		},
 	}
 	snap := delta.FromCovReport(rep)
-	if snap.LinesTotal != 100 || snap.LinesCov != 80 {
+	if snap.LinesTotal != 150 || snap.LinesCov != 105 {
 		t.Errorf("CoverageSnap lines: total=%d cov=%d", snap.LinesTotal, snap.LinesCov)
 	}
-	if snap.LinesPct != 80.0 {
-		t.Errorf("LinesPct = %.1f, want 80.0", snap.LinesPct)
+	if snap.LinesPct != 70.0 {
+		t.Errorf("LinesPct = %.1f, want 70.0", snap.LinesPct)
+	}
+	if len(snap.Files) != 2 {
+		t.Fatalf("Files map len = %d, want 2", len(snap.Files))
+	}
+	if snap.Files["pkg/foo.go"] != 80.0 {
+		t.Errorf("Files[pkg/foo.go] = %.1f, want 80.0", snap.Files["pkg/foo.go"])
+	}
+	if snap.Files["pkg/bar.go"] != 50.0 {
+		t.Errorf("Files[pkg/bar.go] = %.1f, want 50.0", snap.Files["pkg/bar.go"])
 	}
 }
 
@@ -98,6 +108,64 @@ func TestCompute_CoverageDeltas(t *testing.T) {
 	}
 	if d.BranchPctDelta != -5.0 {
 		t.Errorf("BranchPctDelta = %.1f, want -5.0", d.BranchPctDelta)
+	}
+}
+
+func TestCompute_PerFileDeltas(t *testing.T) {
+	base := &delta.Snapshot{
+		Coverage: &delta.CoverageSnap{
+			LinesPct: 75.0,
+			Files: map[string]float64{
+				"pkg/a.go": 80.0,
+				"pkg/b.go": 60.0,
+				"pkg/c.go": 50.0,
+			},
+		},
+	}
+	cur := &delta.Snapshot{
+		Coverage: &delta.CoverageSnap{
+			LinesPct: 80.0,
+			Files: map[string]float64{
+				"pkg/a.go": 90.0, // improved
+				"pkg/b.go": 60.0, // unchanged — should not appear in FileDeltas
+				"pkg/d.go": 70.0, // new file — no baseline, excluded
+			},
+		},
+	}
+	d := delta.Compute(base, cur)
+	if d.FileDeltas == nil {
+		t.Fatal("FileDeltas should not be nil when files differ")
+	}
+	if _, ok := d.FileDeltas["pkg/b.go"]; ok {
+		t.Error("unchanged file pkg/b.go should not appear in FileDeltas")
+	}
+	if _, ok := d.FileDeltas["pkg/d.go"]; ok {
+		t.Error("new-only file pkg/d.go should not appear in FileDeltas")
+	}
+	if _, ok := d.FileDeltas["pkg/c.go"]; ok {
+		t.Error("baseline-only file pkg/c.go should not appear in FileDeltas")
+	}
+	if got := d.FileDeltas["pkg/a.go"]; got != 10.0 {
+		t.Errorf("FileDeltas[pkg/a.go] = %.1f, want 10.0", got)
+	}
+}
+
+func TestCompute_PerFileDeltas_AllUnchanged(t *testing.T) {
+	base := &delta.Snapshot{
+		Coverage: &delta.CoverageSnap{
+			LinesPct: 80.0,
+			Files:    map[string]float64{"pkg/a.go": 80.0},
+		},
+	}
+	cur := &delta.Snapshot{
+		Coverage: &delta.CoverageSnap{
+			LinesPct: 80.0,
+			Files:    map[string]float64{"pkg/a.go": 80.0},
+		},
+	}
+	d := delta.Compute(base, cur)
+	if d.FileDeltas != nil {
+		t.Errorf("FileDeltas should be nil when all per-file values are unchanged, got %v", d.FileDeltas)
 	}
 }
 
