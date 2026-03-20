@@ -22,7 +22,7 @@ import (
 	_ "github.com/trep-dev/trep/pkg/coverage/parser/lcov"
 )
 
-const version = "0.2.0"
+const version = "0.1.0"
 
 func main() {
 	root := &cobra.Command{
