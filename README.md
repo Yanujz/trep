@@ -28,6 +28,23 @@ view of your test run in one portable file.
 
 ## Installation
 
+### Homebrew (macOS and Linux)
+
+```sh
+brew tap Yanujz/trep https://github.com/Yanujz/trep
+brew install trep
+```
+
+> **Note:** The Homebrew formula is updated automatically on each tagged release. If no release has been published yet, install via `go install` below.
+
+### go install
+
+```sh
+go install github.com/trep-dev/trep/cmd/trep@latest
+```
+
+### Build from source
+
 ```sh
 git clone https://github.com/Yanujz/trep
 cd trep
@@ -37,6 +54,11 @@ mv trep /usr/local/bin/
 ```
 
 Requires **Go 1.21+**.
+
+### Pre-built binaries
+
+Binaries for Linux, macOS (Intel and Apple Silicon), and Windows are published as GitHub Release assets on each tagged release. Download the archive for your platform from the [Releases page](https://github.com/Yanujz/trep/releases) and place the `trep` binary on your `PATH`.
+
 
 ---
 

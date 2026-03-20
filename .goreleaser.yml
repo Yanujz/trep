@@ -35,6 +35,22 @@ archives:
 checksum:
   name_template: "checksums.txt"
 
+brews:
+  - name: trep
+    repository:
+      owner: Yanujz
+      name: trep
+      branch: main
+      token: "{{ .Env.GITHUB_TOKEN }}"
+    directory: Formula
+    homepage: "https://github.com/Yanujz/trep"
+    description: "Convert test results and coverage data to rich self-contained HTML reports"
+    license: "MIT"
+    install: |
+      bin.install "trep"
+    test: |
+      system "#{bin}/trep", "--version"
+
 changelog:
   sort: asc
   filters:
