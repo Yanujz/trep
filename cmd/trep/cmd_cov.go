@@ -102,6 +102,17 @@ Examples
 }
 
 func (o *covOpts) run(_ *cobra.Command, args []string) error {
+	if o.outFormat != "html" && o.outFormat != "json" {
+		return fmt.Errorf("unknown --output-format %q: must be html or json", o.outFormat)
+	}
+	if o.annotate {
+		switch o.annotatePlatform {
+		case "auto", "github", "gitlab":
+		default:
+			return fmt.Errorf("unknown --annotate-platform %q: must be auto, github, or gitlab", o.annotatePlatform)
+		}
+	}
+
 	var forced covparser.CovParser
 	if o.format != "auto" {
 		var err error
