@@ -1,13 +1,9 @@
 name: Release
 
-# Disabled until CI is re-enabled and the project is ready for automated releases.
-# Re-enable by restoring the push trigger below.
 on:
-  workflow_dispatch:
-# on:
-#   push:
-#     tags:
-#       - 'v*'
+  push:
+    tags:
+      - 'v*'
 
 permissions:
   contents: write
