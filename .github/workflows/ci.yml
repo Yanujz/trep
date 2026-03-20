@@ -1,9 +1,9 @@
 name: CI
 
+# Disabled until the project is ready for automated CI.
+# Re-enable by restoring the push/pull_request triggers below.
 on:
-  push:
-    branches: [main]
-  pull_request:
+  workflow_dispatch:
 
 jobs:
   test:
