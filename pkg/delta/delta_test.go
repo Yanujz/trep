@@ -248,7 +248,10 @@ func TestLoad_FutureVersion(t *testing.T) {
 }
 
 func TestFormatPctDelta(t *testing.T) {
-	cases := []struct{ in float64; want string }{
+	cases := []struct {
+		in   float64
+		want string
+	}{
 		{2.3, "+2.3%"},
 		{-1.1, "-1.1%"},
 		{0.0, "0.0%"},
@@ -261,7 +264,10 @@ func TestFormatPctDelta(t *testing.T) {
 }
 
 func TestFormatIntDelta(t *testing.T) {
-	cases := []struct{ in int; want string }{
+	cases := []struct {
+		in   int
+		want string
+	}{
 		{3, "+3"},
 		{-2, "-2"},
 		{0, "0"},

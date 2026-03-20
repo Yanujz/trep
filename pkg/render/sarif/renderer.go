@@ -12,12 +12,12 @@ import (
 )
 
 const (
-	schemaURI   = "https://schemastore.azurewebsites.net/schemas/json/sarif-2.1.0.json"
+	schemaURI    = "https://schemastore.azurewebsites.net/schemas/json/sarif-2.1.0.json"
 	sarifVersion = "2.1.0"
 	infoURI      = "https://github.com/Yanujz/trep"
 
-	ruleTestFailure        = "test-failure"
-	ruleCoverageThreshold  = "coverage-below-threshold"
+	ruleTestFailure       = "test-failure"
+	ruleCoverageThreshold = "coverage-below-threshold"
 )
 
 // ── SARIF document types ──────────────────────────────────────────────────────
@@ -38,18 +38,18 @@ type tool struct {
 }
 
 type driver struct {
-	Name           string  `json:"name"`
-	Version        string  `json:"version"`
-	InformationURI string  `json:"informationUri"`
-	Rules          []rule  `json:"rules"`
+	Name           string `json:"name"`
+	Version        string `json:"version"`
+	InformationURI string `json:"informationUri"`
+	Rules          []rule `json:"rules"`
 }
 
 type rule struct {
-	ID                   string              `json:"id"`
-	ShortDescription     message             `json:"shortDescription"`
-	FullDescription      message             `json:"fullDescription"`
-	DefaultConfiguration ruleConfig          `json:"defaultConfiguration"`
-	HelpURI              string              `json:"helpUri"`
+	ID                   string     `json:"id"`
+	ShortDescription     message    `json:"shortDescription"`
+	FullDescription      message    `json:"fullDescription"`
+	DefaultConfiguration ruleConfig `json:"defaultConfiguration"`
+	HelpURI              string     `json:"helpUri"`
 }
 
 type ruleConfig struct {
@@ -114,11 +114,11 @@ func write(w io.Writer, doc document) error {
 func RenderTest(w io.Writer, rep *model.Report, toolVersion string) error {
 	rules := []rule{
 		{
-			ID:               ruleTestFailure,
-			ShortDescription: message{Text: "Test case failed"},
-			FullDescription:  message{Text: "A test case reported a failure or error."},
+			ID:                   ruleTestFailure,
+			ShortDescription:     message{Text: "Test case failed"},
+			FullDescription:      message{Text: "A test case reported a failure or error."},
 			DefaultConfiguration: ruleConfig{Level: "error"},
-			HelpURI:          infoURI,
+			HelpURI:              infoURI,
 		},
 	}
 

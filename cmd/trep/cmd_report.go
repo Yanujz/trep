@@ -9,33 +9,33 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/trep-dev/trep/pkg/render/annotations"
 	covparser "github.com/trep-dev/trep/pkg/coverage/parser"
 	covhtml "github.com/trep-dev/trep/pkg/coverage/render/html"
 	"github.com/trep-dev/trep/pkg/delta"
 	"github.com/trep-dev/trep/pkg/model"
 	"github.com/trep-dev/trep/pkg/parser"
+	"github.com/trep-dev/trep/pkg/render/annotations"
 	htmlrender "github.com/trep-dev/trep/pkg/render/html"
 )
 
 type reportOpts struct {
 	// Inputs
-	testInputs  []string
-	covInput    string
-	testFormat  string
-	covFormat   string
+	testInputs []string
+	covInput   string
+	testFormat string
+	covFormat  string
 
 	// Output
-	outputDir   string
-	prefix      string
-	title       string
+	outputDir string
+	prefix    string
+	title     string
 
 	// CI
-	threshold     float64
-	failTests     bool
-	failCov       bool
-	open          bool
-	quiet         bool
+	threshold        float64
+	failTests        bool
+	failCov          bool
+	open             bool
+	quiet            bool
 	annotate         bool
 	annotatePlatform string
 
@@ -66,24 +66,24 @@ Examples
 	}
 
 	f := cmd.Flags()
-	f.StringArrayVar(&o.testInputs, "tests", nil,   "test result file(s) (required)")
-	f.StringVar     (&o.covInput,   "cov",   "",    "coverage file (required)")
-	f.StringVar     (&o.testFormat, "format-test", "auto", "force test input format")
-	f.StringVar     (&o.covFormat,  "format-cov",  "auto", "force coverage input format")
-	f.StringVar     (&o.outputDir,  "output-dir",  ".",   "directory to write report files into")
-	f.StringVar     (&o.prefix,     "prefix",       "",    "filename prefix (default: 'report' → report_tests.html + report_cov.html)")
-	f.StringVarP    (&o.title,      "title",       "t", "","report title (applied to both pages)")
-	f.Float64Var    (&o.threshold,  "threshold",        0, "minimum line coverage % for --fail-cov")
-	f.BoolVar       (&o.failTests,  "fail-tests",       false, "exit 1 if any tests failed")
-	f.BoolVar       (&o.failCov,    "fail-cov",         false, "exit 1 if coverage is below --threshold")
-	f.BoolVar       (&o.open,       "open",             false, "open both reports in the browser after writing")
-	f.BoolVarP      (&o.quiet,      "quiet",       "q", false, "suppress progress output")
-	f.BoolVar       (&o.annotate,   "annotate",         false, "emit CI annotations for failures and low-coverage files")
-	f.StringVar     (&o.annotatePlatform, "annotate-platform", "auto", "annotation platform: auto | github | gitlab")
-	f.StringVar     (&o.saveSnapshot,  "save-snapshot",   "", "write combined snapshot JSON for future delta comparison")
-	f.StringVar     (&o.baseline,      "baseline",        "", "JSON snapshot from a previous run")
-	f.StringVar     (&o.baselineLabel, "baseline-label",  "", "label for the baseline run")
-	f.StringVar     (&o.stripPrefix,   "strip-prefix",    "", "remove prefix from coverage file paths")
+	f.StringArrayVar(&o.testInputs, "tests", nil, "test result file(s) (required)")
+	f.StringVar(&o.covInput, "cov", "", "coverage file (required)")
+	f.StringVar(&o.testFormat, "format-test", "auto", "force test input format")
+	f.StringVar(&o.covFormat, "format-cov", "auto", "force coverage input format")
+	f.StringVar(&o.outputDir, "output-dir", ".", "directory to write report files into")
+	f.StringVar(&o.prefix, "prefix", "", "filename prefix (default: 'report' → report_tests.html + report_cov.html)")
+	f.StringVarP(&o.title, "title", "t", "", "report title (applied to both pages)")
+	f.Float64Var(&o.threshold, "threshold", 0, "minimum line coverage % for --fail-cov")
+	f.BoolVar(&o.failTests, "fail-tests", false, "exit 1 if any tests failed")
+	f.BoolVar(&o.failCov, "fail-cov", false, "exit 1 if coverage is below --threshold")
+	f.BoolVar(&o.open, "open", false, "open both reports in the browser after writing")
+	f.BoolVarP(&o.quiet, "quiet", "q", false, "suppress progress output")
+	f.BoolVar(&o.annotate, "annotate", false, "emit CI annotations for failures and low-coverage files")
+	f.StringVar(&o.annotatePlatform, "annotate-platform", "auto", "annotation platform: auto | github | gitlab")
+	f.StringVar(&o.saveSnapshot, "save-snapshot", "", "write combined snapshot JSON for future delta comparison")
+	f.StringVar(&o.baseline, "baseline", "", "JSON snapshot from a previous run")
+	f.StringVar(&o.baselineLabel, "baseline-label", "", "label for the baseline run")
+	f.StringVar(&o.stripPrefix, "strip-prefix", "", "remove prefix from coverage file paths")
 
 	_ = cmd.MarkFlagRequired("tests")
 	_ = cmd.MarkFlagRequired("cov")
@@ -112,11 +112,11 @@ func (o *reportOpts) run(_ *cobra.Command, _ []string) error {
 		return fmt.Errorf("output-dir %s: %w", o.outputDir, err)
 	}
 	testOut := filepath.Join(o.outputDir, pfx+"_tests.html")
-	covOut  := filepath.Join(o.outputDir, pfx+"_cov.html")
+	covOut := filepath.Join(o.outputDir, pfx+"_cov.html")
 
 	// Relative cross-links (both files live in the same directory).
 	testFilename := filepath.Base(testOut)
-	covFilename  := filepath.Base(covOut)
+	covFilename := filepath.Base(covOut)
 
 	// ── Parse test inputs ──────────────────────────────────────────────────
 	var forcedTest parser.Parser

@@ -21,7 +21,7 @@ type Snapshot struct {
 	Timestamp string `json:"timestamp"`
 	Label     string `json:"label,omitempty"`
 
-	Tests    *TestSnap    `json:"tests,omitempty"`
+	Tests    *TestSnap     `json:"tests,omitempty"`
 	Coverage *CoverageSnap `json:"coverage,omitempty"`
 }
 
@@ -59,10 +59,10 @@ type Delta struct {
 	HasTests     bool
 
 	// Coverage — overall
-	LinesPctDelta   float64
-	BranchPctDelta  float64
-	FuncPctDelta    float64
-	HasCoverage     bool
+	LinesPctDelta  float64
+	BranchPctDelta float64
+	FuncPctDelta   float64
+	HasCoverage    bool
 
 	// Coverage — per-file line coverage deltas (path → Δ%).
 	// Only populated for files present in both baseline and current.
@@ -108,17 +108,17 @@ func Compute(baseline, current *Snapshot) *Delta {
 
 	if baseline.Tests != nil && current.Tests != nil {
 		d.HasTests = true
-		d.TotalDelta   = current.Tests.Total   - baseline.Tests.Total
-		d.PassedDelta  = current.Tests.Passed  - baseline.Tests.Passed
-		d.FailedDelta  = current.Tests.Failed  - baseline.Tests.Failed
+		d.TotalDelta = current.Tests.Total - baseline.Tests.Total
+		d.PassedDelta = current.Tests.Passed - baseline.Tests.Passed
+		d.FailedDelta = current.Tests.Failed - baseline.Tests.Failed
 		d.SkippedDelta = current.Tests.Skipped - baseline.Tests.Skipped
 	}
 
 	if baseline.Coverage != nil && current.Coverage != nil {
-		d.HasCoverage    = true
-		d.LinesPctDelta  = current.Coverage.LinesPct  - baseline.Coverage.LinesPct
+		d.HasCoverage = true
+		d.LinesPctDelta = current.Coverage.LinesPct - baseline.Coverage.LinesPct
 		d.BranchPctDelta = current.Coverage.BranchPct - baseline.Coverage.BranchPct
-		d.FuncPctDelta   = current.Coverage.FuncPct   - baseline.Coverage.FuncPct
+		d.FuncPctDelta = current.Coverage.FuncPct - baseline.Coverage.FuncPct
 
 		if len(baseline.Coverage.Files) > 0 && len(current.Coverage.Files) > 0 {
 			d.FileDeltas = make(map[string]float64)

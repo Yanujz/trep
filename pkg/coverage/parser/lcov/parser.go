@@ -18,8 +18,13 @@ func init() { covparser.Register(Parser{}) }
 // Parser handles LCOV .info files.
 type Parser struct{}
 
-func (Parser) Name() string         { return "lcov" }
+// Name returns the parser identifier.
+func (Parser) Name() string { return "lcov" }
+
+// Extensions returns the file extensions this parser handles.
 func (Parser) Extensions() []string { return []string{"info"} }
+
+// Detect reports whether header looks like an LCOV .info file.
 func (Parser) Detect(header []byte) bool {
 	s := string(header)
 	return strings.Contains(s, "SF:") || strings.HasPrefix(strings.TrimSpace(s), "TN:")
@@ -34,6 +39,7 @@ func (Parser) Detect(header []byte) bool {
 //   BRDA:line,block,branch,taken
 //   end_of_record
 
+// Parse reads an LCOV .info file from r and returns a CovReport.
 func (Parser) Parse(r io.Reader, source string) (*covmodel.CovReport, error) {
 	rep := &covmodel.CovReport{
 		Sources:   []string{source},

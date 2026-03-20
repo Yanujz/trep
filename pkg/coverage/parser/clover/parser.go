@@ -18,8 +18,13 @@ func init() { covparser.Register(Parser{}) }
 // Parser handles Clover XML files.
 type Parser struct{}
 
-func (Parser) Name() string         { return "clover" }
+// Name returns the parser identifier.
+func (Parser) Name() string { return "clover" }
+
+// Extensions returns the file extensions this parser handles.
 func (Parser) Extensions() []string { return []string{} } // XML ext claimed by cobertura; detect by content
+
+// Detect reports whether header looks like a Clover XML file.
 func (Parser) Detect(header []byte) bool {
 	s := strings.ToLower(string(header))
 	// Require the clover= attribute to avoid matching Cobertura files that
@@ -30,8 +35,8 @@ func (Parser) Detect(header []byte) bool {
 // ── XML wire types ────────────────────────────────────────────────────────────
 
 type xmlCoverage struct {
-	XMLName  xml.Name    `xml:"coverage"`
-	Project  xmlProject  `xml:"project"`
+	XMLName xml.Name   `xml:"coverage"`
+	Project xmlProject `xml:"project"`
 }
 
 type xmlProject struct {
@@ -45,9 +50,9 @@ type xmlPackage struct {
 }
 
 type xmlFile struct {
-	Name    string    `xml:"name,attr"`
-	Path    string    `xml:"path,attr"`
-	Lines   []xmlLine `xml:"line"`
+	Name    string      `xml:"name,attr"`
+	Path    string      `xml:"path,attr"`
+	Lines   []xmlLine   `xml:"line"`
 	Metrics *xmlMetrics `xml:"metrics"`
 }
 
@@ -68,6 +73,7 @@ type xmlMetrics struct {
 
 // ── Parser ────────────────────────────────────────────────────────────────────
 
+// Parse reads a Clover XML file from r and returns a CovReport.
 func (Parser) Parse(r io.Reader, source string) (*covmodel.CovReport, error) {
 	var cov xmlCoverage
 	if err := xml.NewDecoder(r).Decode(&cov); err != nil {
@@ -92,7 +98,7 @@ func (Parser) Parse(r io.Reader, source string) (*covmodel.CovReport, error) {
 
 		for _, l := range xf.Lines {
 			lineNo, _ := strconv.Atoi(l.Num)
-			count, _  := strconv.Atoi(l.Count)
+			count, _ := strconv.Atoi(l.Count)
 			switch l.Type {
 			case "stmt", "cond":
 				fc.Lines = append(fc.Lines, covmodel.LineCov{Number: lineNo, Hits: count})

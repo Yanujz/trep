@@ -20,7 +20,9 @@ import (
 type Platform string
 
 const (
+	// GitHub is the annotation platform identifier for GitHub Actions.
 	GitHub Platform = "github"
+	// GitLab is the annotation platform identifier for GitLab CI.
 	GitLab Platform = "gitlab"
 	// Auto detects from $GITHUB_ACTIONS / $GITLAB_CI; falls back to GitHub format.
 	Auto Platform = "auto"

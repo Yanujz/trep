@@ -19,8 +19,13 @@ func init() { parser.Register(Parser{}) }
 // Parser handles JUnit XML and Google Test XML.
 type Parser struct{}
 
-func (Parser) Name() string         { return "junit" }
+// Name returns the parser identifier.
+func (Parser) Name() string { return "junit" }
+
+// Extensions returns the file extensions this parser handles.
 func (Parser) Extensions() []string { return []string{"xml"} }
+
+// Detect reports whether header looks like JUnit or Google Test XML.
 func (Parser) Detect(header []byte) bool {
 	s := strings.ToLower(strings.TrimSpace(string(header)))
 	return strings.Contains(s, "<testsuites") || strings.Contains(s, "<testsuite")
@@ -57,13 +62,14 @@ func (m *xmlMsg) content() string {
 
 // ── Parser ────────────────────────────────────────────────────────────────────
 
+// Parse reads JUnit XML from r and returns a Report.
 func (Parser) Parse(r io.Reader, source string) (*model.Report, error) {
 	rep := &model.Report{
 		Sources:   []string{source},
 		Timestamp: time.Now().UTC(),
 	}
 
-	suiteMap   := make(map[string]*model.Suite)
+	suiteMap := make(map[string]*model.Suite)
 	suiteOrder := []string{}
 
 	dec := xml.NewDecoder(r)
@@ -119,10 +125,10 @@ func (Parser) Parse(r io.Reader, source string) (*model.Report, error) {
 
 // insertTestCase normalises one <testcase> element and appends it to the suite.
 func insertTestCase(
-	rep      *model.Report,
-	tc       *xmlTestCase,
-	smap     map[string]*model.Suite,
-	order    *[]string,
+	rep *model.Report,
+	tc *xmlTestCase,
+	smap map[string]*model.Suite,
+	order *[]string,
 ) {
 	// Derive suite name from classname.
 	// JUnit convention: "com.example.ClassName.methodName" → "com.example.ClassName"
@@ -155,17 +161,17 @@ func insertTestCase(
 
 	switch {
 	case tc.Failure != nil:
-		c.Status  = model.StatusFail
+		c.Status = model.StatusFail
 		c.Message = tc.Failure.content()
-		c.Stdout  = stdout
+		c.Stdout = stdout
 
 	case tc.Error != nil:
-		c.Status  = model.StatusFail
+		c.Status = model.StatusFail
 		c.Message = tc.Error.content()
-		c.Stdout  = stdout
+		c.Stdout = stdout
 
 	case tc.Skipped != nil:
-		c.Status  = model.StatusSkip
+		c.Status = model.StatusSkip
 		c.Message = tc.Skipped.content()
 		// CTest emits a synthetic "SKIP_REGULAR_EXPRESSION_MATCHED" message;
 		// extract the human-readable reason from system-out instead.

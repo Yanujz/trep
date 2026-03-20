@@ -9,34 +9,6 @@ import (
 	covparser "github.com/trep-dev/trep/pkg/coverage/parser"
 )
 
-func parse(t *testing.T, input string) interface {
-	Stats() (int, int, int, int, int, int)
-} {
-	t.Helper()
-	p, err := covparser.ForName("gocover")
-	if err != nil {
-		t.Fatalf("ForName: %v", err)
-	}
-	rep, err := p.Parse(strings.NewReader(input), "coverage.out")
-	if err != nil {
-		t.Fatalf("Parse: %v", err)
-	}
-	return rep
-}
-
-func parseRep(t *testing.T, input string) interface {
-	Stats() (int, int, int, int, int, int)
-	LinePct() float64
-} {
-	t.Helper()
-	p, _ := covparser.ForName("gocover")
-	rep, err := p.Parse(strings.NewReader(input), "coverage.out")
-	if err != nil {
-		t.Fatalf("Parse: %v", err)
-	}
-	return rep
-}
-
 const basicCover = `mode: set
 github.com/example/pkg/file.go:1.20,3.5 2 1
 github.com/example/pkg/file.go:5.10,7.3 1 0

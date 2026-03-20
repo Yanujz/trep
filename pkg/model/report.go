@@ -7,6 +7,7 @@ import "time"
 // Status is the outcome of a single test case.
 type Status string
 
+// StatusPass, StatusFail, and StatusSkip are the possible test outcome values.
 const (
 	StatusPass Status = "pass"
 	StatusFail Status = "fail"
@@ -15,8 +16,8 @@ const (
 
 // TestCase holds the normalised result of one test.
 type TestCase struct {
-	Suite    string        // Logical grouping: classname, package path, file name, …
-	Name     string        // Test identifier
+	Suite    string // Logical grouping: classname, package path, file name, …
+	Name     string // Test identifier
 	Status   Status
 	Duration time.Duration
 	Message  string // Failure / error / skip reason

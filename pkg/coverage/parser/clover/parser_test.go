@@ -9,21 +9,6 @@ import (
 	covparser "github.com/trep-dev/trep/pkg/coverage/parser"
 )
 
-func parse(t *testing.T, xml string) interface {
-	Stats() (int, int, int, int, int, int)
-} {
-	t.Helper()
-	p, err := covparser.ForName("clover")
-	if err != nil {
-		t.Fatalf("ForName: %v", err)
-	}
-	rep, err := p.Parse(strings.NewReader(xml), "clover.xml")
-	if err != nil {
-		t.Fatalf("Parse: %v", err)
-	}
-	return rep
-}
-
 const basicClover = `<?xml version="1.0"?>
 <coverage clover="3.2.0">
   <project>

@@ -9,19 +9,6 @@ import (
 	covparser "github.com/trep-dev/trep/pkg/coverage/parser"
 )
 
-func parse(t *testing.T, input string) interface{} {
-	t.Helper()
-	p, err := covparser.ForName("lcov")
-	if err != nil {
-		t.Fatalf("ForName: %v", err)
-	}
-	rep, err := p.Parse(strings.NewReader(input), "cov.info")
-	if err != nil {
-		t.Fatalf("Parse: %v", err)
-	}
-	return rep
-}
-
 const basicLCOV = `TN:test
 SF:src/file.go
 FN:10,myFunc

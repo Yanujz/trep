@@ -15,8 +15,8 @@ import (
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
 type sarifDoc struct {
-	Schema  string    `json:"$schema"`
-	Version string    `json:"version"`
+	Schema  string     `json:"$schema"`
+	Version string     `json:"version"`
 	Runs    []sarifRun `json:"runs"`
 }
 
