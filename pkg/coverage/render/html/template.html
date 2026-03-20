@@ -437,8 +437,12 @@ function makeFileRow(r, indent) {
   const badge = THRESHOLD > 0
     ? `<span class="badge-small ${linePct < THRESHOLD ? 'bg-fail' : 'bg-pass'}">${linePct < THRESHOLD ? '↓ low' : '✓'}</span>`
     : '';
+  const fileDelta = DELTA && DELTA.files && DELTA.files[path];
+  const deltaBadge = fileDelta !== undefined
+    ? makeDeltaBadge('\u0394', fileDelta, true)
+    : '';
   return `<tr>
-    <td><div class="${cls}">${esc(fname)}${badge}</div></td>
+    <td><div class="${cls}">${esc(fname)}${badge}${deltaBadge ? ' ' + deltaBadge.outerHTML : ''}</div></td>
     <td><div>${miniBar(linePct,lineTotal)}</div>${countStr(lineCov,lineTotal)}</td>
     <td><div>${miniBar(brPct,brTotal)}</div>${countStr(brCov,brTotal)}</td>
     <td><div>${miniBar(fnPct,fnTotal)}</div>${countStr(fnCov,fnTotal)}</td>

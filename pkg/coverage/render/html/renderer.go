@@ -127,14 +127,15 @@ func (Renderer) Render(w io.Writer, rep *covmodel.CovReport, opts Options) error
 	if opts.Delta != nil {
 		d := opts.Delta
 		type dj struct {
-			HasTests     bool    `json:"hasTests"`
-			FailedDelta  int     `json:"failedDelta"`
-			PassedDelta  int     `json:"passedDelta"`
-			HasCoverage  bool    `json:"hasCoverage"`
-			LinesPct     float64 `json:"linesPct"`
-			BranchPct    float64 `json:"branchPct"`
-			FuncPct      float64 `json:"funcPct"`
-			BaseLabel    string  `json:"baseLabel"`
+			HasTests     bool               `json:"hasTests"`
+			FailedDelta  int                `json:"failedDelta"`
+			PassedDelta  int                `json:"passedDelta"`
+			HasCoverage  bool               `json:"hasCoverage"`
+			LinesPct     float64            `json:"linesPct"`
+			BranchPct    float64            `json:"branchPct"`
+			FuncPct      float64            `json:"funcPct"`
+			BaseLabel    string             `json:"baseLabel"`
+			Files        map[string]float64 `json:"files,omitempty"`
 		}
 		raw, _ := json.Marshal(dj{
 			HasTests:    d.HasTests,
@@ -145,6 +146,7 @@ func (Renderer) Render(w io.Writer, rep *covmodel.CovReport, opts Options) error
 			BranchPct:   round2(d.BranchPctDelta),
 			FuncPct:     round2(d.FuncPctDelta),
 			BaseLabel:   opts.BaselineLabel,
+			Files:       d.FileDeltas,
 		})
 		deltaStr = string(raw)
 	}

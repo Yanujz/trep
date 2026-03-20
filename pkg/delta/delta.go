@@ -44,6 +44,9 @@ type CoverageSnap struct {
 	FuncPct     float64 `json:"func_pct"`
 	FuncCov     int     `json:"func_covered"`
 	FuncTotal   int     `json:"func_total"`
+	// Files maps each file path to its line coverage percentage.
+	// Used to produce per-file deltas when comparing two snapshots.
+	Files map[string]float64 `json:"files,omitempty"`
 }
 
 // Delta is the computed difference between a baseline and current snapshot.
@@ -55,11 +58,15 @@ type Delta struct {
 	SkippedDelta int
 	HasTests     bool
 
-	// Coverage
+	// Coverage — overall
 	LinesPctDelta   float64
 	BranchPctDelta  float64
 	FuncPctDelta    float64
 	HasCoverage     bool
+
+	// Coverage — per-file line coverage deltas (path → Δ%).
+	// Only populated for files present in both baseline and current.
+	FileDeltas map[string]float64
 }
 
 // FromTestReport builds a TestSnap from a parsed test report.
@@ -71,7 +78,7 @@ func FromTestReport(rep *testmodel.Report) *TestSnap {
 // FromCovReport builds a CoverageSnap from a parsed coverage report.
 func FromCovReport(rep *covmodel.CovReport) *CoverageSnap {
 	lt, lc, bt, bc, ft, fc := rep.Stats()
-	return &CoverageSnap{
+	snap := &CoverageSnap{
 		LinesPct:    rep.LinePct(),
 		LinesCov:    lc,
 		LinesTotal:  lt,
@@ -82,6 +89,13 @@ func FromCovReport(rep *covmodel.CovReport) *CoverageSnap {
 		FuncCov:     fc,
 		FuncTotal:   ft,
 	}
+	if len(rep.Files) > 0 {
+		snap.Files = make(map[string]float64, len(rep.Files))
+		for _, f := range rep.Files {
+			snap.Files[f.Path] = f.LinePct()
+		}
+	}
+	return snap
 }
 
 // Compute calculates the delta between baseline and current.
@@ -105,6 +119,21 @@ func Compute(baseline, current *Snapshot) *Delta {
 		d.LinesPctDelta  = current.Coverage.LinesPct  - baseline.Coverage.LinesPct
 		d.BranchPctDelta = current.Coverage.BranchPct - baseline.Coverage.BranchPct
 		d.FuncPctDelta   = current.Coverage.FuncPct   - baseline.Coverage.FuncPct
+
+		if len(baseline.Coverage.Files) > 0 && len(current.Coverage.Files) > 0 {
+			d.FileDeltas = make(map[string]float64)
+			for path, curPct := range current.Coverage.Files {
+				if basePct, ok := baseline.Coverage.Files[path]; ok {
+					delta := curPct - basePct
+					if delta != 0 {
+						d.FileDeltas[path] = delta
+					}
+				}
+			}
+			if len(d.FileDeltas) == 0 {
+				d.FileDeltas = nil
+			}
+		}
 	}
 
 	return d
