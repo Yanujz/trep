@@ -23,6 +23,8 @@ view of your test run in one portable file.
 - **Slow test highlighting** — tests in the top 10% of duration are highlighted
 - **CI integration** — `--fail` exits 1 when any test failed; `--quiet` suppresses noise
 - **Browser launch** — `--open` opens the report immediately after writing
+- **Shell completions** — bash, zsh, fish, and PowerShell via `trep completion <shell>`
+- **Per-file coverage delta** — when using `--baseline`, each file row in the coverage report shows its individual Δ% badge
 
 ---
 
@@ -68,9 +70,26 @@ Binaries for Linux, macOS (Intel and Apple Silicon), and Windows are published a
 trep <command> [flags] [args]
 
 Commands:
-  test      Parse test results → HTML report
-  cov       Parse coverage data → HTML report
-  report    Parse both → two linked HTML pages
+  test        Parse test results → HTML report
+  cov         Parse coverage data → HTML report
+  report      Parse both → two linked HTML pages
+  completion  Generate shell completion script
+```
+
+### Shell completions
+
+```sh
+# bash
+trep completion bash > /etc/bash_completion.d/trep
+
+# zsh
+trep completion zsh > "${fpath[1]}/_trep"
+
+# fish
+trep completion fish > ~/.config/fish/completions/trep.fish
+
+# PowerShell
+trep completion powershell | Out-String | Invoke-Expression
 ```
 
 ### `trep test` flags
@@ -246,6 +265,7 @@ trep/
     └── render/
         ├── html/        # Test HTML renderer
         ├── json/        # Structured JSON output
+        ├── sarif/       # SARIF 2.1.0 output
         └── annotations/ # GitHub / GitLab CI annotation lines
 ```
 
