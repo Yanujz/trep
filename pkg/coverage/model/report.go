@@ -118,6 +118,32 @@ func (r *CovReport) FuncPct() float64 {
 	return safePct(fc, ft)
 }
 
+// Merge incorporates all files from other into r.
+// Files with duplicate paths are combined by appending their raw slice data and
+// recomputing totals. Use this to merge per-package coverage profiles into one
+// aggregate report.
+func (r *CovReport) Merge(other *CovReport) {
+	r.Sources = append(r.Sources, other.Sources...)
+
+	byPath := make(map[string]int, len(r.Files))
+	for i, f := range r.Files {
+		byPath[f.Path] = i
+	}
+	for _, of := range other.Files {
+		if idx, ok := byPath[of.Path]; ok {
+			ex := r.Files[idx]
+			ex.Lines = append(ex.Lines, of.Lines...)
+			ex.Branches = append(ex.Branches, of.Branches...)
+			ex.Funcs = append(ex.Funcs, of.Funcs...)
+			ex.Compute()
+		} else {
+			byPath[of.Path] = len(r.Files)
+			r.Files = append(r.Files, of)
+		}
+	}
+}
+
+
 func safePct(covered, total int) float64 {
 	if total == 0 {
 		return 0
