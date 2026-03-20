@@ -230,3 +230,33 @@ func TestJUnit_SourcePreserved(t *testing.T) {
 		t.Errorf("Sources = %v, want [test.xml]", rep.Sources)
 	}
 }
+
+// Regression for #2: classname should be preserved when its last segment
+// does NOT match the test case name (standard JUnit output).
+func TestJUnit_ClassnamePreservedWhenNotMethodName(t *testing.T) {
+	xml := `<testsuites>
+  <testsuite>
+    <testcase name="testAdd" classname="com.example.MathTest"/>
+  </testsuite>
+</testsuites>`
+	rep := parse(t, xml)
+	suite := rep.Suites[0]
+	if suite.Name != "com.example.MathTest" {
+		t.Errorf("suite name = %q, want 'com.example.MathTest'", suite.Name)
+	}
+}
+
+// When the tool embeds the method name in classname the trailing segment IS
+// stripped (e.g. surefire-style: "com.example.MathTest.testAdd").
+func TestJUnit_ClassnameStrippedWhenEqualsTestName(t *testing.T) {
+	xml := `<testsuites>
+  <testsuite>
+    <testcase name="testAdd" classname="com.example.MathTest.testAdd"/>
+  </testsuite>
+</testsuites>`
+	rep := parse(t, xml)
+	suite := rep.Suites[0]
+	if suite.Name != "com.example.MathTest" {
+		t.Errorf("suite name = %q, want 'com.example.MathTest'", suite.Name)
+	}
+}

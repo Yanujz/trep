@@ -131,10 +131,12 @@ func insertTestCase(
 	if suiteName == "" {
 		suiteName = tc.Name
 	}
-	// Strip the trailing ".testName" segment for JUnit-style classnames.
+	// Strip the trailing segment only when the tool embeds the method name in
+	// the classname (e.g. "com.example.ClassName.testMethod").  Standard JUnit
+	// classnames are already fully-qualified class names, so we must not strip
+	// unless the suffix exactly equals the test case name.
 	if dot := strings.LastIndex(suiteName, "."); dot > 0 && dot < len(suiteName)-1 {
-		// Only strip if the prefix still looks like a class/package name.
-		if !strings.Contains(suiteName[:dot], "/") {
+		if !strings.Contains(suiteName[:dot], "/") && suiteName[dot+1:] == tc.Name {
 			suiteName = suiteName[:dot]
 		}
 	}

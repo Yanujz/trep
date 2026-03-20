@@ -22,7 +22,9 @@ func (Parser) Name() string         { return "clover" }
 func (Parser) Extensions() []string { return []string{} } // XML ext claimed by cobertura; detect by content
 func (Parser) Detect(header []byte) bool {
 	s := strings.ToLower(string(header))
-	return strings.Contains(s, "<coverage") && strings.Contains(s, "clover")
+	// Require the clover= attribute to avoid matching Cobertura files that
+	// happen to contain the word "clover" in a path or comment.
+	return strings.Contains(s, "<coverage") && strings.Contains(s, "clover=")
 }
 
 // ── XML wire types ────────────────────────────────────────────────────────────

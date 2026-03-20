@@ -132,4 +132,9 @@ func TestClover_Detect(t *testing.T) {
 	if p.Detect([]byte(`<coverage line-rate="0.8">`)) {
 		t.Error("should not detect Cobertura as Clover")
 	}
+	// Regression: a Cobertura file whose path contains the word "clover"
+	// must not be detected as a Clover file.
+	if p.Detect([]byte(`<coverage line-rate="0.9"><sources><source>/src/clover/report</source>`)) {
+		t.Error("should not misdetect Cobertura with 'clover' in path as Clover")
+	}
 }
