@@ -17,6 +17,7 @@ import (
 	covmodel "github.com/trep-dev/trep/pkg/coverage/model"
 	"github.com/trep-dev/trep/pkg/delta"
 	jsonrender "github.com/trep-dev/trep/pkg/render/json"
+	sarifrender "github.com/trep-dev/trep/pkg/render/sarif"
 )
 
 type covOpts struct {
@@ -80,7 +81,7 @@ Examples
 
 	f := cmd.Flags()
 	f.StringVarP(&o.output,          "output",           "o", "",      "output file (default: input .html or .json; '-' for stdout)")
-	f.StringVar (&o.outFormat,        "output-format",         "html",  "output format: html | json")
+	f.StringVar (&o.outFormat,        "output-format",         "html",  "output format: html | json | sarif")
 	f.StringVarP(&o.format,           "format",           "f", "auto",  "force input format: auto | lcov | gocover | cobertura | clover")
 	f.StringVarP(&o.title,            "title",            "t", "",      "report title")
 	f.Float64Var(&o.thresholdLine,    "threshold-line",         0,      "minimum line coverage %   (0 = disabled)")
@@ -103,8 +104,8 @@ Examples
 }
 
 func (o *covOpts) run(_ *cobra.Command, args []string) error {
-	if o.outFormat != "html" && o.outFormat != "json" {
-		return fmt.Errorf("unknown --output-format %q: must be html or json", o.outFormat)
+	if o.outFormat != "html" && o.outFormat != "json" && o.outFormat != "sarif" {
+		return fmt.Errorf("unknown --output-format %q: must be html, json, or sarif", o.outFormat)
 	}
 	if o.annotate {
 		switch o.annotatePlatform {
@@ -193,8 +194,11 @@ func (o *covOpts) run(_ *cobra.Command, args []string) error {
 
 	// Output path.
 	ext := ".html"
-	if o.outFormat == "json" {
+	switch o.outFormat {
+	case "json":
 		ext = ".json"
+	case "sarif":
+		ext = ".sarif"
 	}
 	outPath := o.output
 	if outPath == "" {
@@ -205,13 +209,20 @@ func (o *covOpts) run(_ *cobra.Command, args []string) error {
 		}
 	}
 
-	if o.outFormat == "json" {
+	switch o.outFormat {
+	case "json":
 		if err := writeFile(outPath, func(w io.Writer) error {
 			return jsonrender.RenderCov(w, rep)
 		}); err != nil {
 			return fmt.Errorf("render json %s: %w", outPath, err)
 		}
-	} else {
+	case "sarif":
+		if err := writeFile(outPath, func(w io.Writer) error {
+			return sarifrender.RenderCov(w, rep, o.thresholdLine, version)
+		}); err != nil {
+			return fmt.Errorf("render sarif %s: %w", outPath, err)
+		}
+	default:
 		opts := covhtml.Options{
 			Title:           o.title,
 			ThresholdLine:   o.thresholdLine,
