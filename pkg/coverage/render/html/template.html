@@ -1,0 +1,529 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>%%TITLE%%</title>
+<style>
+:root {
+  --bg:#f8fafc; --surface:#fff; --border:#e2e8f0;
+  --text-main:#0f172a; --text-muted:#64748b;
+  --primary:#3b82f6; --primary-hover:#2563eb;
+  --pass-bg:#dcfce7; --pass-text:#166534; --pass-border:#bbf7d0; --pass-solid:#22c55e;
+  --warn-bg:#fef3c7; --warn-text:#92400e; --warn-border:#fde68a; --warn-solid:#f59e0b;
+  --fail-bg:#fee2e2; --fail-text:#991b1b; --fail-border:#fecaca; --fail-solid:#ef4444;
+  --crit-bg:#fce7f3; --crit-text:#9d174d; --crit-border:#fbcfe8;
+  --neutral-bg:#f1f5f9; --delta-up:#166534; --delta-dn:#991b1b;
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family:'Inter',-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+       font-size:14px; background:var(--bg); color:var(--text-main); line-height:1.5; padding:24px; }
+.container { max-width:1400px; margin:0 auto; display:flex; flex-direction:column; gap:24px; }
+.card { background:var(--surface); border:1px solid var(--border); border-radius:12px;
+        box-shadow:0 1px 3px rgba(0,0,0,.05); overflow:hidden; }
+
+/* Nav */
+.nav { display:flex; align-items:center; gap:12px; padding:12px 20px;
+       background:var(--surface); border:1px solid var(--border);
+       border-radius:12px; font-size:.875rem; }
+.nav a { color:var(--text-muted); text-decoration:none; padding:4px 12px;
+          border-radius:6px; font-weight:500; }
+.nav a:hover { background:var(--neutral-bg); color:var(--text-main); }
+.nav a.active { background:var(--text-main); color:#fff; }
+.nav-sep { color:var(--border); user-select:none; }
+.nav-stat { font-size:.75rem; color:var(--text-muted); margin-left:auto; font-weight:500; }
+
+/* Header */
+.header { padding:24px; display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:16px; }
+.header-info h1 { font-size:1.5rem; font-weight:700; margin-bottom:4px; letter-spacing:-0.025em; }
+.header-meta { color:var(--text-muted); font-size:.875rem; font-weight:500; }
+.header-right { display:flex; gap:12px; align-items:center; flex-wrap:wrap; }
+
+/* Delta badges */
+.delta-row { display:flex; gap:8px; flex-wrap:wrap; }
+.delta-badge { display:inline-flex; align-items:center; gap:4px; padding:4px 10px;
+               border-radius:8px; font-size:.75rem; font-weight:700; border:1px solid; }
+.delta-up  { background:#dcfce7; color:var(--delta-up); border-color:#bbf7d0; }
+.delta-dn  { background:#fee2e2; color:var(--delta-dn); border-color:#fecaca; }
+.delta-neu { background:var(--neutral-bg); color:var(--text-muted); border-color:var(--border); }
+
+/* Summary grid */
+.summary-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
+                gap:1px; background:var(--border); border-top:1px solid var(--border); }
+.stat-box { background:var(--surface); padding:24px; display:flex; flex-direction:column; gap:6px; }
+.stat-value { font-size:2.25rem; font-weight:700; line-height:1; letter-spacing:-0.025em; }
+.stat-label { font-size:.75rem; color:var(--text-muted); text-transform:uppercase; letter-spacing:.05em; font-weight:700; }
+.stat-sub { font-size:.8125rem; color:var(--text-muted); }
+.stat-bar { height:6px; background:var(--border); border-radius:3px; margin-top:6px; overflow:hidden; }
+.stat-bar-fill { height:100%; border-radius:3px; transition:width .3s; }
+
+/* Threshold marker */
+.thresh-line { position:relative; }
+.thresh-marker { position:absolute; top:0; bottom:0; width:2px; background:#ef4444;
+                 border-radius:1px; transform:translateX(-50%); }
+.thresh-label { position:absolute; top:-18px; font-size:.65rem; color:#ef4444;
+                font-weight:700; transform:translateX(-50%); white-space:nowrap; }
+
+/* Toolbar */
+.toolbar { padding:16px 24px; display:flex; gap:12px; align-items:center;
+           border-bottom:1px solid var(--border); background:var(--surface);
+           position:sticky; top:0; z-index:10; flex-wrap:wrap; }
+input[type="search"] { padding:8px 16px; border:1px solid var(--border); border-radius:8px;
+                        width:300px; font-size:.875rem; background:var(--bg); color:var(--text-main); }
+input[type="search"]:focus { outline:none; border-color:var(--primary);
+                              box-shadow:0 0 0 3px rgba(59,130,246,.15); background:var(--surface); }
+.filter-btn { padding:6px 14px; border-radius:999px; border:1px solid var(--border);
+              background:var(--surface); color:var(--text-muted); cursor:pointer;
+              font-size:.875rem; font-weight:600; }
+.filter-btn:hover { background:var(--bg); color:var(--text-main); }
+.filter-btn.active { background:var(--text-main); color:#fff; border-color:var(--text-main); }
+.filter-btn.active.f-low  { background:#fee2e2; color:#991b1b; border-color:#fecaca; }
+.filter-btn.active.f-warn { background:#fef3c7; color:#92400e; border-color:#fde68a; }
+.view-btn { margin-left:auto; padding:6px 14px; border-radius:8px; border:1px solid var(--border);
+            background:var(--bg); color:var(--text-main); font-weight:600; cursor:pointer; font-size:.875rem; }
+.view-btn:hover { background:#e2e8f0; }
+.pager-info { font-size:.875rem; color:var(--text-muted); font-weight:500; }
+
+/* Table */
+table { width:100%; border-collapse:collapse; text-align:left; table-layout:fixed; }
+th { background:#f8fafc; padding:11px 20px; font-size:.72rem; text-transform:uppercase;
+     letter-spacing:.05em; color:var(--text-muted); font-weight:700; border-bottom:1px solid var(--border);
+     cursor:pointer; user-select:none; white-space:nowrap; }
+th:hover { color:var(--text-main); background:#f1f5f9; }
+th.sa::after { content:" \25B2"; }
+th.sd::after { content:" \25BC"; }
+td { padding:9px 20px; border-bottom:1px solid var(--border); vertical-align:middle; overflow:hidden; }
+tr:last-child td { border-bottom:none; }
+tr:hover td { background:#f8fafc; }
+
+/* Dir header rows */
+.dir-hdr { background:#f1f5f9; cursor:pointer; border-bottom:1px solid var(--border); }
+.dir-hdr:hover { background:#e2e8f0; }
+.dir-hdr td { padding:9px 20px; vertical-align:middle; }
+.dir-title { font-weight:600; color:var(--text-main); font-size:.875rem; display:flex; align-items:center; gap:8px; }
+.dir-count { color:var(--text-muted); font-weight:500; font-size:.75rem; }
+
+/* File path cell */
+.file-path { font-family:ui-monospace,monospace; font-size:.8125rem; word-break:break-all; color:var(--text-main); }
+.file-indent { padding-left:32px; }
+.badge-small { display:inline-block; font-size:.65rem; font-weight:700; padding:1px 6px;
+               border-radius:4px; text-transform:uppercase; letter-spacing:.03em; margin-left:6px; }
+.bg-pass { background:var(--pass-bg); color:var(--pass-text); border:1px solid var(--pass-border); }
+.bg-warn { background:var(--warn-bg); color:var(--warn-text); border:1px solid var(--warn-border); }
+.bg-fail { background:var(--fail-bg); color:var(--fail-text); border:1px solid var(--fail-border); }
+.bg-none { background:#f1f5f9; color:var(--text-muted); border:1px solid var(--border); }
+
+/* Mini progress bar in table */
+.cov-bar { display:flex; align-items:center; gap:8px; }
+.mini-bar { flex:1; height:6px; background:var(--border); border-radius:3px; overflow:hidden; min-width:60px; }
+.mini-fill { height:100%; border-radius:3px; }
+.cov-pct { font-variant-numeric:tabular-nums; font-size:.875rem; font-weight:600; min-width:44px; }
+.cov-count { font-size:.75rem; color:var(--text-muted); white-space:nowrap; }
+
+/* Pagination */
+.pager { padding:16px 24px; display:flex; gap:8px; align-items:center;
+         border-top:1px solid var(--border); background:var(--surface); }
+.pager button { padding:7px 14px; border:1px solid var(--border); background:var(--surface);
+                color:var(--text-main); border-radius:8px; cursor:pointer; font-size:.875rem; font-weight:500; }
+.pager button:hover:not(:disabled) { background:#f1f5f9; }
+.pager button:disabled { opacity:.4; cursor:not-allowed; }
+.pager button.active { background:var(--text-main); color:#fff; border-color:var(--text-main); pointer-events:none; }
+</style>
+</head>
+<body>
+<div class="container">
+
+  <!-- Nav bar (links to test report if available) -->
+  <div class="nav" id="nav-bar">
+    <span style="font-weight:700;color:var(--text-main)">trep</span>
+    <span class="nav-sep">|</span>
+    <a href="#" class="active" id="nav-cov">📊 Coverage</a>
+    <span id="nav-test-wrap" style="display:none">
+      <span class="nav-sep">·</span>
+      <a href="" id="nav-test">📋 Test Results</a>
+    </span>
+    <span class="nav-stat" id="nav-stat"></span>
+  </div>
+
+  <!-- Summary card -->
+  <div class="card">
+    <div class="header">
+      <div class="header-info">
+        <h1>%%TITLE%%</h1>
+        <div class="header-meta">%%TS%%</div>
+      </div>
+      <div class="header-right">
+        <div class="delta-row" id="delta-row" style="display:none"></div>
+        <div class="badge %%STATUS_CLS%%" style="font-size:.875rem;padding:6px 16px;display:inline-flex;align-items:center;padding:6px 16px;border-radius:999px;font-weight:700;border:1px solid;font-size:.8125rem">%%STATUS%%</div>
+      </div>
+    </div>
+    <div class="summary-grid">
+      <div class="stat-box">
+        <span class="stat-value" id="stat-line-val" style="color:var(--pass-solid)">%%LINE_PCT%%%</span>
+        <span class="stat-label">Line Coverage</span>
+        <span class="stat-sub">%%LINE_COV%% / %%LINE_TOTAL%% lines</span>
+        <div class="stat-bar thresh-line" id="bar-line">
+          <div class="stat-bar-fill" id="bar-line-fill" style="width:%%PCT_LINE%%%;background:var(--pass-solid)"></div>
+        </div>
+      </div>
+      <div class="stat-box">
+        <span class="stat-value" id="stat-br-val" style="color:var(--warn-solid)">%%BRANCH_PCT%%%</span>
+        <span class="stat-label">Branch Coverage</span>
+        <span class="stat-sub">%%BRANCH_COV%% / %%BRANCH_TOTAL%% branches</span>
+        <div class="stat-bar">
+          <div class="stat-bar-fill" id="bar-br-fill" style="width:%%PCT_BRANCH%%%;background:var(--warn-solid)"></div>
+        </div>
+      </div>
+      <div class="stat-box">
+        <span class="stat-value" id="stat-fn-val" style="color:var(--primary)">%%FUNC_PCT%%%</span>
+        <span class="stat-label">Function Coverage</span>
+        <span class="stat-sub">%%FUNC_COV%% / %%FUNC_TOTAL%% functions</span>
+        <div class="stat-bar">
+          <div class="stat-bar-fill" id="bar-fn-fill" style="width:%%PCT_FUNC%%%;background:var(--primary)"></div>
+        </div>
+      </div>
+      <div class="stat-box">
+        <span class="stat-value">%%FILE_COUNT%%</span>
+        <span class="stat-label">Files</span>
+        <span class="stat-sub" id="thresh-stat"></span>
+      </div>
+    </div>
+  </div>
+
+  <!-- File table card -->
+  <div class="card">
+    <div class="toolbar">
+      <input type="search" id="srch" placeholder="Filter by file or directory…" autocomplete="off">
+      <button class="filter-btn active" id="f-all"  onclick="setFilter('all')">All</button>
+      <button class="filter-btn f-low"  id="f-low"  onclick="setFilter('low')">Low (&lt;50%)</button>
+      <button class="filter-btn f-warn" id="f-warn" onclick="setFilter('warn')">Partial (50–80%)</button>
+      <button class="filter-btn" id="f-zero" onclick="setFilter('zero')">Uncovered</button>
+      <button class="view-btn" id="v-btn" onclick="toggleView()">View: Tree</button>
+      <div class="pager-info" id="cnt"></div>
+    </div>
+    <div style="overflow-x:auto">
+      <table>
+        <thead><tr>
+          <th style="width:40%" onclick="sortBy(0,this)">File</th>
+          <th style="width:20%" onclick="sortBy(2,this)">Lines</th>
+          <th style="width:20%" onclick="sortBy(5,this)">Branches</th>
+          <th style="width:20%" onclick="sortBy(8,this)">Functions</th>
+        </tr></thead>
+        <tbody id="tbody"></tbody>
+      </table>
+    </div>
+    <div class="pager" id="pgr"></div>
+  </div>
+
+</div><!-- /container -->
+
+<script>
+"use strict";
+
+// Row layout: [path, dir, linePct, linesCov, linesTotal,
+//              branchPct, branchCov, branchTotal, funcPct, funcCov, funcTotal]
+const ALL_DATA    = %%DATA%%;
+const THRESHOLD   = %%THRESHOLD%%;    // 0 = disabled
+const DELTA       = %%DELTA%%;        // null or delta object
+const TEST_URL    = "%%TEST_URL%%";
+const OVERALL_LINE_PCT   = %%LINE_PCT%%;
+const OVERALL_BRANCH_PCT = %%BRANCH_PCT%%;
+const OVERALL_FUNC_PCT   = %%FUNC_PCT%%;
+
+const PAGE_FILES = 200;
+const PAGE_DIRS  = 50;
+
+let filtered   = ALL_DATA.slice();
+let curFilter  = 'all';
+let isTree     = true;
+let collapsed  = new Set();
+let dirCache   = {};
+let dirOrder   = [];
+let sortCol    = -1, sortDir = 1, curPage = 1;
+let searchTimer = null;
+
+// ── Boot ─────────────────────────────────────────────────────────────────────
+
+(function boot() {
+  // Nav cross-link
+  if (TEST_URL) {
+    document.getElementById('nav-test').href = TEST_URL;
+    document.getElementById('nav-test-wrap').style.display = '';
+  }
+  document.getElementById('nav-stat').textContent =
+    ALL_DATA.length + ' file' + (ALL_DATA.length === 1 ? '' : 's');
+
+  // Threshold marker on line bar
+  if (THRESHOLD > 0) {
+    const bar = document.getElementById('bar-line');
+    bar.style.position = 'relative';
+    const marker = document.createElement('div');
+    marker.className = 'thresh-marker';
+    marker.style.left = THRESHOLD + '%';
+    const label = document.createElement('div');
+    label.className = 'thresh-label';
+    label.style.left = THRESHOLD + '%';
+    label.textContent = THRESHOLD + '%';
+    bar.appendChild(marker);
+    bar.appendChild(label);
+
+    // Colour stat boxes based on threshold
+    colourStat('stat-line-val',   OVERALL_LINE_PCT);
+    colourStat('stat-br-val',     OVERALL_BRANCH_PCT);
+    colourStat('stat-fn-val',     OVERALL_FUNC_PCT);
+
+    // Files below threshold count
+    const below = ALL_DATA.filter(r => r[2] < THRESHOLD).length;
+    document.getElementById('thresh-stat').textContent =
+      below + ' file' + (below === 1 ? '' : 's') + ' below threshold';
+  }
+
+  // Delta badges
+  if (DELTA) {
+    const row = document.getElementById('delta-row');
+    row.style.display = 'flex';
+    if (DELTA.hasCoverage) {
+      row.appendChild(makeDeltaBadge('Lines', DELTA.linesPct, true));
+      if (DELTA.branchPct !== 0) row.appendChild(makeDeltaBadge('Branch', DELTA.branchPct, true));
+      if (DELTA.funcPct   !== 0) row.appendChild(makeDeltaBadge('Func',   DELTA.funcPct,   true));
+    }
+    if (DELTA.hasTests && DELTA.failedDelta !== 0) {
+      row.appendChild(makeDeltaBadge('Fails', DELTA.failedDelta, false));
+    }
+    if (DELTA.baseLabel) {
+      const lbl = document.createElement('span');
+      lbl.style.cssText = 'font-size:.7rem;color:var(--text-muted);align-self:center';
+      lbl.textContent = 'vs ' + DELTA.baseLabel;
+      row.appendChild(lbl);
+    }
+  }
+
+  buildDirCache();
+  render();
+})();
+
+function colourStat(id, pct) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.style.color = pct >= 80 ? 'var(--pass-solid)'
+                 : pct >= 50 ? 'var(--warn-solid)'
+                 : 'var(--fail-solid)';
+}
+
+function makeDeltaBadge(label, val, isPct) {
+  const b = document.createElement('span');
+  const sign = val > 0 ? '+' : '';
+  const text = sign + (isPct ? val.toFixed(1) + '%' : val);
+  b.className = 'delta-badge ' + (val > 0 ? 'delta-up' : val < 0 ? 'delta-dn' : 'delta-neu');
+  b.textContent = label + ': ' + text;
+  return b;
+}
+
+// ── Helpers ───────────────────────────────────────────────────────────────────
+
+function esc(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+function pctColour(pct) {
+  if (pct === 0)   return '#ef4444';
+  if (pct < 50)    return '#ef4444';
+  if (pct < 80)    return '#f59e0b';
+  return '#22c55e';
+}
+
+function badgeCls(pct) {
+  if (pct === 0)  return 'bg-none';
+  if (pct < 50)   return 'bg-fail';
+  if (pct < 80)   return 'bg-warn';
+  return 'bg-pass';
+}
+
+function miniBar(pct, total) {
+  if (total === 0) return '<span style="color:var(--text-muted);font-size:.75rem">N/A</span>';
+  const col = pctColour(pct);
+  return `<div class="cov-bar">
+    <div class="mini-bar"><div class="mini-fill" style="width:${pct}%;background:${col}"></div></div>
+    <span class="cov-pct" style="color:${col}">${pct.toFixed(1)}%</span>
+  </div>`;
+}
+
+function countStr(cov, total) {
+  if (total === 0) return '';
+  return `<div class="cov-count">${cov}/${total}</div>`;
+}
+
+// ── Filter / search ───────────────────────────────────────────────────────────
+
+document.getElementById('srch').addEventListener('input', function() {
+  clearTimeout(searchTimer);
+  searchTimer = setTimeout(() => applyFilter(this.value), 200);
+});
+
+function setFilter(f) {
+  curFilter = f;
+  ['all','low','warn','zero'].forEach(k => {
+    const b = document.getElementById('f-'+k);
+    b.className = 'filter-btn' + (k!=='all'?' f-'+k:'') + (k===f?' active':'');
+  });
+  applyFilter(document.getElementById('srch').value);
+}
+
+function applyFilter(q) {
+  q = q.toLowerCase().trim();
+  filtered = ALL_DATA.filter(r => {
+    const pct = r[2]; // linePct
+    const total = r[4];
+    if (curFilter === 'zero' && (total === 0 || pct > 0)) return false;
+    if (curFilter === 'low'  && (pct >= 50 || pct === 0)) return false;
+    if (curFilter === 'warn' && (pct < 50 || pct >= 80))  return false;
+    return !q || r[0].toLowerCase().includes(q) || r[1].toLowerCase().includes(q);
+  });
+  if (isTree) buildDirCache();
+  curPage = 1;
+  render();
+}
+
+function buildDirCache() {
+  dirCache = {}; dirOrder = [];
+  for (const r of filtered) {
+    const d = r[1] || '(root)';
+    if (!dirCache[d]) { dirCache[d] = []; dirOrder.push(d); }
+    dirCache[d].push(r);
+  }
+  dirOrder.sort();
+}
+
+// ── Sort ──────────────────────────────────────────────────────────────────────
+
+function sortBy(col, th) {
+  if (isTree) { isTree = false; document.getElementById('v-btn').textContent = 'View: Flat'; }
+  sortDir = (sortCol === col) ? -sortDir : 1;
+  sortCol = col;
+  document.querySelectorAll('thead th').forEach(h => h.className = '');
+  th.className = sortDir === 1 ? 'sa' : 'sd';
+  filtered.sort((a, b) => {
+    const av = a[col] ?? 0, bv = b[col] ?? 0;
+    return typeof av === 'number' ? sortDir*(av-bv) : sortDir*String(av).localeCompare(String(bv));
+  });
+  curPage = 1; render();
+}
+
+function toggleView() {
+  isTree = !isTree;
+  document.getElementById('v-btn').textContent = isTree ? 'View: Tree' : 'View: Flat';
+  if (isTree) {
+    document.querySelectorAll('thead th').forEach(h => h.className = '');
+    sortCol = -1;
+    applyFilter(document.getElementById('srch').value);
+    return;
+  }
+  curPage = 1; render();
+}
+
+function toggleDir(d) {
+  collapsed.has(d) ? collapsed.delete(d) : collapsed.add(d);
+  render();
+}
+
+// ── Render ────────────────────────────────────────────────────────────────────
+
+function makeFileRow(r, indent) {
+  const [path, , linePct, lineCov, lineTotal,
+         brPct, brCov, brTotal,
+         fnPct, fnCov, fnTotal] = r;
+  const cls = indent ? 'file-path file-indent' : 'file-path';
+  const fname = indent ? path.split('/').pop() : path;
+  const badge = THRESHOLD > 0
+    ? `<span class="badge-small ${linePct < THRESHOLD ? 'bg-fail' : 'bg-pass'}">${linePct < THRESHOLD ? '↓ low' : '✓'}</span>`
+    : '';
+  return `<tr>
+    <td><div class="${cls}">${esc(fname)}${badge}</div></td>
+    <td><div>${miniBar(linePct,lineTotal)}</div>${countStr(lineCov,lineTotal)}</td>
+    <td><div>${miniBar(brPct,brTotal)}</div>${countStr(brCov,brTotal)}</td>
+    <td><div>${miniBar(fnPct,fnTotal)}</div>${countStr(fnCov,fnTotal)}</td>
+  </tr>`;
+}
+
+function dirAgg(files) {
+  let lt=0,lc=0,bt=0,bc=0,ft=0,fc=0;
+  for (const r of files) { lc+=r[3];lt+=r[4]; bc+=r[6];bt+=r[7]; fc+=r[9];ft+=r[10]; }
+  const lp = lt?lc/lt*100:0, bp = bt?bc/bt*100:0, fp = ft?fc/ft*100:0;
+  return {lp,lc,lt,bp,bc,bt,fp,fc,ft};
+}
+
+function render() {
+  const tbody = document.getElementById('tbody');
+  let html = '';
+
+  if (isTree) {
+    if (dirOrder.length === 0 && filtered.length > 0) buildDirCache();
+    const totalDirs = dirOrder.length;
+    const pages = Math.max(1, Math.ceil(totalDirs / PAGE_DIRS));
+    curPage = Math.min(curPage, pages);
+    const slice = dirOrder.slice((curPage-1)*PAGE_DIRS, curPage*PAGE_DIRS);
+
+    for (const dir of slice) {
+      const files  = dirCache[dir];
+      const isCol  = collapsed.has(dir);
+      const agg    = dirAgg(files);
+      const chev   = isCol ? '&#9658;' : '&#9660;';
+      const dBadge = THRESHOLD > 0
+        ? (agg.lp < THRESHOLD
+            ? `<span class="badge-small bg-fail">${files.filter(r=>r[2]<THRESHOLD).length} below</span>`
+            : `<span class="badge-small bg-pass">✓</span>`)
+        : '';
+
+      html += `<tr class="dir-hdr" onclick="toggleDir(${JSON.stringify(dir)})">
+        <td colspan="4">
+          <div style="display:flex;justify-content:space-between;align-items:center">
+            <div class="dir-title">
+              <span style="display:inline-block;width:16px">${chev}</span>
+              📁 ${esc(dir)} <span class="dir-count">(${files.length} file${files.length===1?'':'s'})</span>${dBadge}
+            </div>
+            <div style="display:flex;gap:24px;font-size:.8125rem;color:var(--text-muted)">
+              <span>Lines: <strong style="color:${pctColour(agg.lp)}">${agg.lp.toFixed(1)}%</strong></span>
+              ${agg.bt>0?`<span>Branch: <strong style="color:${pctColour(agg.bp)}">${agg.bp.toFixed(1)}%</strong></span>`:''}
+              ${agg.ft>0?`<span>Funcs: <strong style="color:${pctColour(agg.fp)}">${agg.fp.toFixed(1)}%</strong></span>`:''}
+            </div>
+          </div>
+        </td></tr>`;
+
+      if (!isCol) {
+        for (const r of files) html += makeFileRow(r, true);
+      }
+    }
+
+    document.getElementById('cnt').textContent =
+      `${totalDirs} dir${totalDirs===1?'':'s'} · ${filtered.length} file${filtered.length===1?'':'s'}`;
+    tbody.innerHTML = html;
+    renderPager(totalDirs, pages);
+
+  } else {
+    const total = filtered.length;
+    const pages = Math.max(1, Math.ceil(total / PAGE_FILES));
+    curPage = Math.min(curPage, pages);
+    const slice = filtered.slice((curPage-1)*PAGE_FILES, curPage*PAGE_FILES);
+    tbody.innerHTML = slice.map(r => makeFileRow(r, false)).join('');
+    document.getElementById('cnt').textContent = `${total} file${total===1?'':'s'}`;
+    renderPager(total, pages);
+  }
+}
+
+// ── Pagination ────────────────────────────────────────────────────────────────
+function renderPager(total, pages) {
+  const p = document.getElementById('pgr');
+  p.innerHTML = '';
+  if (pages <= 1) return;
+  p.appendChild(mkBtn('← Prev', curPage===1, ()=>{curPage--;render();}));
+  pageRange(curPage,pages).forEach(n=>{
+    if (n==='…'){const s=document.createElement('span');s.textContent='…';s.style.cssText='padding:0 8px;color:var(--text-muted)';p.appendChild(s);}
+    else{const b=mkBtn(String(n),false,()=>{curPage=n;render();});if(n===curPage)b.classList.add('active');p.appendChild(b);}
+  });
+  p.appendChild(mkBtn('Next →', curPage===pages, ()=>{curPage++;render();}));
+}
+function mkBtn(label,dis,fn){const b=document.createElement('button');b.textContent=label;b.disabled=dis;b.onclick=fn;return b;}
+function pageRange(c,t){if(t<=7)return Array.from({length:t},(_,i)=>i+1);const r=[1];if(c>3)r.push('…');for(let i=Math.max(2,c-1);i<=Math.min(t-1,c+1);i++)r.push(i);if(c<t-2)r.push('…');r.push(t);return r;}
+</script>
+</body>
+</html>

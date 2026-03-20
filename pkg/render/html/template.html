@@ -1,0 +1,562 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>%%TITLE%%</title>
+<style>
+:root {
+  --bg: #f8fafc; --surface: #ffffff; --border: #e2e8f0;
+  --text-main: #0f172a; --text-muted: #64748b;
+  --primary: #3b82f6; --primary-hover: #2563eb;
+  --pass-bg: #dcfce7; --pass-text: #166534; --pass-border: #bbf7d0; --pass-solid: #22c55e;
+  --fail-bg: #fee2e2; --fail-text: #991b1b; --fail-border: #fecaca; --fail-solid: #ef4444;
+  --skip-bg: #fef3c7; --skip-text: #92400e; --skip-border: #fde68a; --skip-solid: #f59e0b;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  font-size: 14px; background: var(--bg); color: var(--text-main); line-height: 1.5; padding: 24px;
+}
+
+.container { max-width: 1400px; margin: 0 auto; display: flex; flex-direction: column; gap: 24px; }
+
+.card {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,.05); overflow: hidden;
+}
+
+/* ── Header & summary ─────────────────────────────────────────────────────── */
+.header { padding: 24px; display: flex; justify-content: space-between; align-items: flex-start; }
+.header-info h1 { font-size: 1.5rem; font-weight: 700; margin-bottom: 4px; letter-spacing: -0.025em; }
+.header-meta { color: var(--text-muted); font-size: .875rem; font-weight: 500; }
+
+.progress-bar { height: 6px; display: flex; width: 100%; background: var(--border); }
+
+.summary-grid {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1px; background: var(--border); border-top: 1px solid var(--border);
+}
+.stat-box { background: var(--surface); padding: 24px; display: flex; flex-direction: column; gap: 4px; }
+.stat-value { font-size: 2.25rem; font-weight: 700; line-height: 1; letter-spacing: -0.025em; }
+.stat-label { font-size: .75rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: .05em; font-weight: 700; }
+
+/* ── Toolbar ──────────────────────────────────────────────────────────────── */
+.toolbar {
+  padding: 16px 24px; display: flex; gap: 12px; align-items: center;
+  border-bottom: 1px solid var(--border); background: var(--surface);
+  position: sticky; top: 0; z-index: 10; flex-wrap: wrap;
+}
+
+input[type="search"] {
+  padding: 8px 16px; border: 1px solid var(--border); border-radius: 8px;
+  width: 320px; font-size: .875rem; background: var(--bg); color: var(--text-main);
+}
+input[type="search"]:focus {
+  outline: none; border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(59,130,246,.15); background: var(--surface);
+}
+
+.filter-btn {
+  padding: 6px 16px; border-radius: 999px; border: 1px solid var(--border);
+  background: var(--surface); color: var(--text-muted); cursor: pointer;
+  font-size: .875rem; font-weight: 600;
+}
+.filter-btn:hover { background: var(--bg); color: var(--text-main); }
+.filter-btn.active.f-all  { background: var(--text-main); color: #fff; border-color: var(--text-main); }
+.filter-btn.active.f-pass { background: var(--pass-bg); color: var(--pass-text); border-color: var(--pass-border); }
+.filter-btn.active.f-fail { background: var(--fail-bg); color: var(--fail-text); border-color: var(--fail-border); }
+.filter-btn.active.f-skip { background: var(--skip-bg); color: var(--skip-text); border-color: var(--skip-border); }
+
+.view-toggle {
+  margin-left: auto; padding: 6px 16px; border-radius: 8px;
+  border: 1px solid var(--border); background: var(--bg); color: var(--text-main);
+  font-weight: 600; cursor: pointer; font-size: .875rem;
+}
+.view-toggle:hover { background: #e2e8f0; }
+
+.pager-info { font-size: .875rem; color: var(--text-muted); font-weight: 500; margin-left: 12px; }
+
+/* ── Table ────────────────────────────────────────────────────────────────── */
+table { width: 100%; border-collapse: collapse; text-align: left; table-layout: fixed; }
+
+th {
+  background: #f8fafc; padding: 12px 24px; font-size: .75rem;
+  text-transform: uppercase; letter-spacing: .05em; color: var(--text-muted);
+  font-weight: 700; border-bottom: 1px solid var(--border); cursor: pointer; user-select: none;
+}
+th:hover { color: var(--text-main); background: #f1f5f9; }
+th.sa::after { content: " \25B2"; }
+th.sd::after { content: " \25BC"; }
+
+td { padding: 10px 24px; border-bottom: 1px solid var(--border); vertical-align: top; overflow: hidden; }
+tr:last-child td { border-bottom: none; }
+tr:hover td { background: #f8fafc; }
+
+/* ── Suite header rows (grouped view) ────────────────────────────────────── */
+.suite-hdr {
+  background: #f1f5f9; cursor: pointer; border-bottom: 1px solid var(--border);
+}
+.suite-hdr:hover { background: #e2e8f0; }
+.suite-hdr td { padding: 10px 24px; vertical-align: middle; }
+.suite-title {
+  font-weight: 600; color: var(--text-main); font-size: .875rem;
+  display: flex; align-items: center; gap: 8px;
+}
+.suite-count { color: var(--text-muted); font-weight: 500; font-size: .75rem; }
+
+/* ── Cells ────────────────────────────────────────────────────────────────── */
+.badge {
+  display: inline-flex; align-items: center; padding: 4px 12px; border-radius: 999px;
+  font-size: .75rem; font-weight: 700; border: 1px solid transparent;
+  text-transform: uppercase; letter-spacing: .025em;
+}
+.b-pass { background: var(--pass-bg); color: var(--pass-text); border-color: var(--pass-border); }
+.b-fail { background: var(--fail-bg); color: var(--fail-text); border-color: var(--fail-border); }
+.b-skip { background: var(--skip-bg); color: var(--skip-text); border-color: var(--skip-border); }
+
+.suite-chip {
+  display: inline-block; font-size: .75rem; color: var(--primary);
+  background: #eff6ff; border: 1px solid #bfdbfe; padding: 2px 8px;
+  border-radius: 6px; margin-right: 12px; font-weight: 600; white-space: nowrap;
+}
+
+.test-name { font-family: ui-monospace, monospace; font-weight: 600; color: var(--text-main); word-break: break-all; }
+
+.file-loc {
+  font-size: .75rem; color: var(--text-muted); font-family: ui-monospace, monospace;
+  margin-top: 3px;
+}
+
+.duration { color: var(--text-muted); font-variant-numeric: tabular-nums; font-size: .875rem; }
+.duration.slow { color: var(--fail-text); font-weight: 600; }
+
+.error-msg {
+  margin-top: 6px; color: var(--fail-text); font-size: .8125rem;
+  font-family: ui-monospace, monospace; background: var(--fail-bg);
+  padding: 4px 8px; border-radius: 4px; display: inline-block;
+  white-space: pre-wrap; word-break: break-all; max-width: 100%;
+}
+
+/* ── Console output toggle ────────────────────────────────────────────────── */
+.toggle-out {
+  display: inline-flex; align-items: center; background: none; border: none;
+  color: var(--primary); font-size: .75rem; font-weight: 600;
+  cursor: pointer; padding: 4px 0; margin-top: 8px;
+}
+.toggle-out:hover { color: var(--primary-hover); text-decoration: underline; }
+
+.console {
+  display: none; margin-top: 12px; background: #0f172a; color: #e2e8f0;
+  padding: 16px; border-radius: 8px; font-family: ui-monospace, monospace;
+  font-size: .8125rem; overflow-x: auto; white-space: pre-wrap; line-height: 1.5;
+}
+.console.open { display: block; }
+
+/* ── Pagination ───────────────────────────────────────────────────────────── */
+.pager {
+  padding: 16px 24px; display: flex; gap: 8px; align-items: center;
+  border-top: 1px solid var(--border); background: var(--surface);
+}
+.pager button {
+  padding: 8px 16px; border: 1px solid var(--border); background: var(--surface);
+  color: var(--text-main); border-radius: 8px; cursor: pointer; font-size: .875rem; font-weight: 500;
+}
+.pager button:hover:not(:disabled) { background: #f1f5f9; }
+.pager button:disabled { opacity: .4; cursor: not-allowed; }
+.pager button.active { background: var(--text-main); color: white; border-color: var(--text-main); pointer-events: none; }
+</style>
+</head>
+<body>
+
+<div class="container">
+
+  <!-- Nav bar -->
+  <div style="background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:12px 20px;display:flex;align-items:center;gap:12px;font-size:.875rem">
+    <span style="font-weight:700;color:#0f172a">trep</span>
+    <span style="color:#e2e8f0">|</span>
+    <a href="#" style="text-decoration:none;padding:4px 12px;border-radius:6px;font-weight:600;background:#0f172a;color:#fff">📋 Test Results</a>
+    <span id="nav-cov-wrap" style="display:none">
+      <span style="color:#e2e8f0">·</span>
+      <a href="" id="nav-cov-link" style="color:#64748b;text-decoration:none;padding:4px 12px;border-radius:6px;font-weight:500">📊 Coverage</a>
+    </span>
+    <span id="nav-stat" style="margin-left:auto;font-size:.75rem;color:#64748b;font-weight:500"></span>
+  </div>
+
+  <!-- ── Summary card ─────────────────────────────────────────────────── -->
+  <div class="card">
+    <div class="header">
+      <div class="header-info">
+        <h1>%%TITLE%%</h1>
+        <div class="header-meta">%%TS%% &nbsp;&middot;&nbsp; Elapsed: %%ELAPSED%%</div>
+      </div>
+      <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap">
+        <div id="delta-row" style="display:none;gap:8px;flex-wrap:wrap"></div>
+        <div class="badge %%STATUS_CLS%%" style="font-size:.875rem; padding:6px 16px;">%%STATUS%%</div>
+      </div>
+    </div>
+    <div class="progress-bar">
+      <div style="width:%%PCT_PASS%%%; background:var(--pass-solid)"></div>
+      <div style="width:%%PCT_FAIL%%%; background:var(--fail-solid)"></div>
+      <div style="width:%%PCT_SKIP%%%; background:var(--skip-solid)"></div>
+    </div>
+    <div class="summary-grid">
+      <div class="stat-box">
+        <span class="stat-value" style="color:var(--pass-solid)">%%PASSED%%</span>
+        <span class="stat-label">Passed (%%PCT_PASS%%%)</span>
+      </div>
+      <div class="stat-box">
+        <span class="stat-value" style="color:var(--fail-solid)">%%FAILED%%</span>
+        <span class="stat-label">Failed (%%PCT_FAIL%%%)</span>
+      </div>
+      <div class="stat-box">
+        <span class="stat-value" style="color:var(--skip-solid)">%%SKIPPED%%</span>
+        <span class="stat-label">Skipped (%%PCT_SKIP%%%)</span>
+      </div>
+      <div class="stat-box">
+        <span class="stat-value">%%TOTAL%%</span>
+        <span class="stat-label">Total Tests</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Table card ───────────────────────────────────────────────────── -->
+  <div class="card">
+    <div class="toolbar">
+      <input type="search" id="srch" placeholder="Filter by suite or test name…" autocomplete="off">
+      <button class="filter-btn active f-all"  id="f-all"  onclick="setFilter('all')">All</button>
+      <button class="filter-btn f-pass"        id="f-pass" onclick="setFilter('pass')">Passed</button>
+      <button class="filter-btn f-fail"        id="f-fail" onclick="setFilter('fail')">Failed</button>
+      <button class="filter-btn f-skip"        id="f-skip" onclick="setFilter('skip')">Skipped</button>
+      <button class="view-toggle" id="v-toggle" onclick="toggleView()">View: Grouped</button>
+      <div class="pager-info" id="cnt"></div>
+    </div>
+
+    <div style="overflow-x:auto">
+      <table>
+        <thead>
+          <tr>
+            <th style="width:20%" onclick="sortBy(0,this)">Suite</th>
+            <th style="width:60%" onclick="sortBy(1,this)">Test Name &amp; Details</th>
+            <th style="width:10%" onclick="sortBy(2,this)">Result</th>
+            <th style="width:10%" onclick="sortBy(3,this)">Duration</th>
+          </tr>
+        </thead>
+        <tbody id="tbody"></tbody>
+      </table>
+    </div>
+    <div class="pager" id="pgr"></div>
+  </div>
+
+</div><!-- /container -->
+
+<script>
+"use strict";
+
+// Row layout (pre-injection):  [suite, name, result, dur_ms, detail, stdout]
+//                           or [suite, name, result, dur_ms, detail, stdout, file, line]
+// JS injects a stable index as the last element after loading.
+const ALL_DATA = %%DATA%%;
+ALL_DATA.forEach((t, i) => t.push(i));  // append stableId
+
+const DELTA   = %%DELTA%%;    // null or delta object
+const COV_URL = "%%COV_URL%%";
+
+// ── Boot: nav + delta ──────────────────────────────────────────────────────
+(function boot() {
+  document.getElementById('nav-stat').textContent =
+    ALL_DATA.length + ' test' + (ALL_DATA.length === 1 ? '' : 's');
+
+  if (COV_URL) {
+    document.getElementById('nav-cov-link').href = COV_URL;
+    document.getElementById('nav-cov-wrap').style.display = '';
+  }
+
+  if (DELTA) {
+    const row = document.getElementById('delta-row');
+    row.style.display = 'flex';
+    if (DELTA.hasTests) {
+      if (DELTA.failedDelta !== 0) row.appendChild(badge('Fails', DELTA.failedDelta, false));
+      if (DELTA.passedDelta !== 0) row.appendChild(badge('Passed', DELTA.passedDelta, false));
+    }
+    if (DELTA.hasCoverage && DELTA.linesPct !== 0)
+      row.appendChild(badge('Coverage', DELTA.linesPct, true));
+    if (DELTA.baseLabel) {
+      const s = document.createElement('span');
+      s.style.cssText = 'font-size:.7rem;color:#64748b;align-self:center';
+      s.textContent = 'vs ' + DELTA.baseLabel;
+      row.appendChild(s);
+    }
+  }
+
+  function badge(label, val, isPct) {
+    const b = document.createElement('span');
+    const sign = val > 0 ? '+' : '';
+    b.textContent = label + ': ' + sign + (isPct ? val.toFixed(1)+'%' : val);
+    const good = (label === 'Fails') ? val < 0 : val > 0;
+    b.style.cssText = `display:inline-flex;align-items:center;padding:4px 10px;border-radius:8px;
+      font-size:.75rem;font-weight:700;border:1px solid;
+      background:${good?'#dcfce7':'#fee2e2'};
+      color:${good?'#166534':'#991b1b'};
+      border-color:${good?'#bbf7d0':'#fecaca'}`;
+    return b;
+  }
+})();
+
+const PAGE_TESTS  = 200;
+const PAGE_SUITES = 50;
+
+let filtered    = ALL_DATA.slice();
+let sortCol     = -1;
+let sortDir     = 1;
+let curPage     = 1;
+let curFilter   = 'all';
+let isGrouped   = true;
+let collapsed   = new Set();
+let grpCache    = {};
+let suiteCache  = [];
+let searchTimer = null;
+
+// ── Helpers ────────────────────────────────────────────────────────────────
+
+function esc(s) {
+  return String(s)
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;')
+    .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function fmtDur(ms) {
+  if (ms <    1) return '< 1ms';
+  if (ms < 1000) return ms + 'ms';
+  return (ms/1000).toFixed(2) + 's';
+}
+
+function slugify(s) {
+  // safe for use in a single-quoted JS string inside onclick=""
+  return String(s).replace(/\\/g,'\\\\').replace(/'/g,"\\'");
+}
+
+// ── Row rendering ──────────────────────────────────────────────────────────
+
+function makeRow(t, slowMs, hideSuite) {
+  const suite    = t[0], name = t[1], result = t[2];
+  const dur      = t[3], detail = t[4], stdout = t[5];
+  const stableId = t[t.length - 1];
+
+  // File/line are at [6],[7] only when the pre-injection row had 8 elements.
+  const hasLoc  = (t.length - 1) === 8 && t[6];
+  const filePart = hasLoc
+    ? '<div class="file-loc">' + esc(t[7] > 0 ? t[6]+':'+t[7] : t[6]) + '</div>'
+    : '';
+
+  const durCls  = dur >= slowMs ? 'duration slow' : 'duration';
+  const det     = detail ? '<div class="error-msg">' + esc(detail) + '</div>' : '';
+  let   extra   = '';
+
+  if (stdout) {
+    const id = 'so' + stableId;
+    extra = '<button class="toggle-out" onclick="tog(\'' + id + '\')">▶ Show Console Output</button>'
+          + '<div class="console" id="' + id + '">' + esc(stdout) + '</div>';
+  }
+
+  const suiteCol = hideSuite
+    ? '<span style="color:var(--text-muted);font-size:.75rem">&rdsh;</span>'
+    : '<span class="suite-chip">' + esc(suite) + '</span>';
+
+  return `<tr>
+    <td>${suiteCol}</td>
+    <td><div class="test-name">${esc(name)}</div>${filePart}${det}${extra}</td>
+    <td><span class="badge b-${esc(result)}">${esc(result)}</span></td>
+    <td class="${durCls}">${fmtDur(dur)}</td>
+  </tr>`;
+}
+
+function tog(id) {
+  const el = document.getElementById(id);
+  if (el) el.classList.toggle('open');
+}
+
+// ── Filter / sort ──────────────────────────────────────────────────────────
+
+document.getElementById('srch').addEventListener('input', function() {
+  clearTimeout(searchTimer);
+  searchTimer = setTimeout(() => applyFilter(this.value), 200);
+});
+
+function setFilter(f) {
+  curFilter = f;
+  ['all','pass','fail','skip'].forEach(k => {
+    document.getElementById('f-'+k).className =
+      'filter-btn f-'+k + (k === f ? ' active' : '');
+  });
+  applyFilter(document.getElementById('srch').value);
+}
+
+function applyFilter(q) {
+  q = q.toLowerCase().trim();
+  filtered = ALL_DATA.filter(t => {
+    if (curFilter !== 'all' && t[2] !== curFilter) return false;
+    return !q || t[0].toLowerCase().includes(q) || t[1].toLowerCase().includes(q);
+  });
+  if (isGrouped) buildGroupCache();
+  curPage = 1;
+  render();
+}
+
+function buildGroupCache() {
+  grpCache   = {};
+  suiteCache = [];
+  for (const t of filtered) {
+    if (!grpCache[t[0]]) { grpCache[t[0]] = []; suiteCache.push(t[0]); }
+    grpCache[t[0]].push(t);
+  }
+  suiteCache.sort();
+}
+
+function sortBy(col, th) {
+  if (isGrouped) {
+    isGrouped = false;
+    document.getElementById('v-toggle').textContent = 'View: Flat';
+  }
+  sortDir = (sortCol === col) ? -sortDir : 1;
+  sortCol = col;
+  document.querySelectorAll('thead th').forEach(h => h.className = '');
+  th.className = sortDir === 1 ? 'sa' : 'sd';
+  filtered.sort((a, b) => {
+    const av = a[col] ?? '', bv = b[col] ?? '';
+    return typeof av === 'number'
+      ? sortDir * (av - bv)
+      : sortDir * String(av).localeCompare(String(bv));
+  });
+  curPage = 1;
+  render();
+}
+
+// ── View toggle ────────────────────────────────────────────────────────────
+
+function toggleView() {
+  isGrouped = !isGrouped;
+  document.getElementById('v-toggle').textContent =
+    isGrouped ? 'View: Grouped' : 'View: Flat';
+  if (isGrouped) {
+    document.querySelectorAll('thead th').forEach(h => h.className = '');
+    sortCol = -1;
+    applyFilter(document.getElementById('srch').value);
+    return;
+  }
+  curPage = 1;
+  render();
+}
+
+function toggleSuite(name) {
+  collapsed.has(name) ? collapsed.delete(name) : collapsed.add(name);
+  render();
+}
+
+// ── Render ─────────────────────────────────────────────────────────────────
+
+function render() {
+  const tbody = document.getElementById('tbody');
+  const maxDur = filtered.reduce((m, t) => Math.max(m, t[3]), 0);
+  const slowMs = Math.max(maxDur * 0.1, 100);
+
+  if (isGrouped) {
+    if (suiteCache.length === 0 && filtered.length > 0) buildGroupCache();
+
+    const totalSuites = suiteCache.length;
+    const pages = Math.max(1, Math.ceil(totalSuites / PAGE_SUITES));
+    curPage = Math.min(curPage, pages);
+
+    const slice = suiteCache.slice((curPage-1)*PAGE_SUITES, curPage*PAGE_SUITES);
+    let html = '';
+
+    for (const suiteName of slice) {
+      const tests  = grpCache[suiteName];
+      const isCol  = collapsed.has(suiteName);
+      const fails  = tests.filter(t => t[2] === 'fail').length;
+      const badge  = fails > 0
+        ? `<span class="badge b-fail">${fails} Failed</span>`
+        : `<span class="badge b-pass">All Pass</span>`;
+      const chev   = isCol ? '&#9658;' : '&#9660;';
+
+      html += `<tr class="suite-hdr" onclick="toggleSuite('${slugify(suiteName)}')">
+        <td colspan="4">
+          <div style="display:flex;justify-content:space-between;align-items:center;width:100%">
+            <div class="suite-title">
+              <span style="display:inline-block;width:16px">${chev}</span>
+              ${esc(suiteName)}
+              <span class="suite-count">(${tests.length} test${tests.length===1?'':'s'})</span>
+            </div>
+            ${badge}
+          </div>
+        </td></tr>`;
+
+      if (!isCol) {
+        for (const t of tests) html += makeRow(t, slowMs, true);
+      }
+    }
+
+    tbody.innerHTML = html;
+    document.getElementById('cnt').textContent =
+      `${totalSuites.toLocaleString()} suite${totalSuites===1?'':'s'} (${filtered.length.toLocaleString()} tests)`;
+    renderPager(totalSuites, pages);
+
+  } else {
+    const total = filtered.length;
+    const pages = Math.max(1, Math.ceil(total / PAGE_TESTS));
+    curPage = Math.min(curPage, pages);
+
+    const slice = filtered.slice((curPage-1)*PAGE_TESTS, curPage*PAGE_TESTS);
+    tbody.innerHTML = slice.map(t => makeRow(t, slowMs, false)).join('');
+    document.getElementById('cnt').textContent =
+      `${total.toLocaleString()} test${total===1?'':'s'}`;
+    renderPager(total, pages);
+  }
+}
+
+// ── Pagination ─────────────────────────────────────────────────────────────
+
+function renderPager(total, pages) {
+  const p = document.getElementById('pgr');
+  p.innerHTML = '';
+  if (pages <= 1) return;
+
+  p.appendChild(mkBtn('\u2190 Prev', curPage === 1, () => { curPage--; render(); }));
+  pageRange(curPage, pages).forEach(n => {
+    if (n === '…') {
+      const sp = document.createElement('span');
+      sp.textContent = '…'; sp.style.cssText = 'padding:0 8px;color:var(--text-muted)';
+      p.appendChild(sp);
+    } else {
+      const b = mkBtn(String(n), false, () => { curPage = n; render(); });
+      if (n === curPage) b.classList.add('active');
+      p.appendChild(b);
+    }
+  });
+  p.appendChild(mkBtn('Next \u2192', curPage === pages, () => { curPage++; render(); }));
+}
+
+function mkBtn(label, disabled, fn) {
+  const b = document.createElement('button');
+  b.textContent = label; b.disabled = disabled; b.onclick = fn;
+  return b;
+}
+
+function pageRange(c, t) {
+  if (t <= 7) return Array.from({length: t}, (_, i) => i + 1);
+  const r = [1];
+  if (c > 3) r.push('…');
+  for (let i = Math.max(2, c-1); i <= Math.min(t-1, c+1); i++) r.push(i);
+  if (c < t-2) r.push('…');
+  r.push(t);
+  return r;
+}
+
+// ── Boot ───────────────────────────────────────────────────────────────────
+buildGroupCache();
+render();
+</script>
+</body>
+</html>
