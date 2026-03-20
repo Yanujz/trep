@@ -92,6 +92,14 @@ Examples
 }
 
 func (o *reportOpts) run(_ *cobra.Command, _ []string) error {
+	if o.annotate {
+		switch o.annotatePlatform {
+		case "auto", "github", "gitlab":
+		default:
+			return fmt.Errorf("unknown --annotate-platform %q: must be auto, github, or gitlab", o.annotatePlatform)
+		}
+	}
+
 	// ── Determine output paths ─────────────────────────────────────────────
 	pfx := o.prefix
 	if pfx == "" {
@@ -187,8 +195,12 @@ func (o *reportOpts) run(_ *cobra.Command, _ []string) error {
 	// ── Annotations ───────────────────────────────────────────────────────────
 	if o.annotate {
 		ap := annotations.Platform(o.annotatePlatform)
-		_ = annotations.WriteTestAnnotations(os.Stderr, merged, ap)
-		_ = annotations.WriteCovAnnotations(os.Stderr, covRep, o.threshold, ap)
+		if err := annotations.WriteTestAnnotations(os.Stderr, merged, ap); err != nil {
+			return err
+		}
+		if err := annotations.WriteCovAnnotations(os.Stderr, covRep, o.threshold, ap); err != nil {
+			return err
+		}
 	}
 
 	// ── Render test report ─────────────────────────────────────────────────

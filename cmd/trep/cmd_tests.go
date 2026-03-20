@@ -85,6 +85,17 @@ Examples
 }
 
 func (o *testOpts) run(_ *cobra.Command, args []string) error {
+	if o.outFormat != "html" && o.outFormat != "json" {
+		return fmt.Errorf("unknown --output-format %q: must be html or json", o.outFormat)
+	}
+	if o.annotate {
+		switch o.annotatePlatform {
+		case "auto", "github", "gitlab":
+		default:
+			return fmt.Errorf("unknown --annotate-platform %q: must be auto, github, or gitlab", o.annotatePlatform)
+		}
+	}
+
 	reports, err := o.parseInputs(args)
 	if err != nil {
 		return err
@@ -232,6 +243,9 @@ func (o *testOpts) resolveOutput(args []string, rep *model.Report, idx int, ext 
 	}
 	if len(args) == 1 && args[0] == "-" {
 		return "-"
+	}
+	if len(rep.Sources) == 0 {
+		return "report" + ext
 	}
 	base := rep.Sources[0]
 	if base == "<stdin>" {
