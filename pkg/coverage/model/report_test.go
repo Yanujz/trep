@@ -109,3 +109,57 @@ func TestFileCovCompute_UnreachableBranchNotCounted(t *testing.T) {
 		t.Errorf("BranchTotal should be 0 when all branches are unreachable, got %d", f.BranchTotal)
 	}
 }
+
+func TestCovReportMerge_DisjointFiles(t *testing.T) {
+	a := &covmodel.CovReport{
+		Sources: []string{"a.out"},
+		Files: []*covmodel.FileCov{
+			{Path: "src/a.go", LinesTotal: 10, LinesCovered: 8},
+		},
+	}
+	b := &covmodel.CovReport{
+		Sources: []string{"b.out"},
+		Files: []*covmodel.FileCov{
+			{Path: "src/b.go", LinesTotal: 5, LinesCovered: 3},
+		},
+	}
+	a.Merge(b)
+
+	if len(a.Files) != 2 {
+		t.Fatalf("want 2 files after merge, got %d", len(a.Files))
+	}
+	if len(a.Sources) != 2 {
+		t.Errorf("want 2 sources after merge, got %d", len(a.Sources))
+	}
+}
+
+func TestCovReportMerge_DuplicatePath(t *testing.T) {
+	a := &covmodel.CovReport{
+		Files: []*covmodel.FileCov{
+			{Path: "src/foo.go", Lines: []covmodel.LineCov{{Number: 1, Hits: 2}, {Number: 2, Hits: 0}}},
+		},
+	}
+	b := &covmodel.CovReport{
+		Files: []*covmodel.FileCov{
+			{Path: "src/foo.go", Lines: []covmodel.LineCov{{Number: 2, Hits: 1}, {Number: 3, Hits: 5}}},
+		},
+	}
+	a.Files[0].Compute()
+	a.Merge(b)
+
+	if len(a.Files) != 1 {
+		t.Fatalf("duplicate path should not add a new file, got %d files", len(a.Files))
+	}
+	f := a.Files[0]
+	if len(f.Lines) != 4 {
+		t.Errorf("merged file should have 4 raw lines, got %d", len(f.Lines))
+	}
+	// After Merge, Compute is called: 3 total lines (1 hit, 3 total from raw)
+	// Actually 4 raw lines: {1,2},{2,0},{2,1},{3,5} → 4 lines total, covered=3
+	if f.LinesTotal != 4 {
+		t.Errorf("LinesTotal = %d, want 4", f.LinesTotal)
+	}
+	if f.LinesCovered != 3 {
+		t.Errorf("LinesCovered = %d, want 3", f.LinesCovered)
+	}
+}

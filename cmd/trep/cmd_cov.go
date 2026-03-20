@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"path"
+	"strings"
 	"time"
 
 	"github.com/spf13/cobra"
@@ -11,6 +13,7 @@ import (
 	"github.com/trep-dev/trep/pkg/render/annotations"
 	covparser "github.com/trep-dev/trep/pkg/coverage/parser"
 	covhtml "github.com/trep-dev/trep/pkg/coverage/render/html"
+	covmodel "github.com/trep-dev/trep/pkg/coverage/model"
 	"github.com/trep-dev/trep/pkg/delta"
 	jsonrender "github.com/trep-dev/trep/pkg/render/json"
 )
@@ -27,6 +30,7 @@ type covOpts struct {
 	open            bool
 	quiet           bool
 	stripPrefix     string
+	exclude         []string
 	annotate        bool
 	annotatePlatform string
 	saveSnapshot    string
@@ -40,11 +44,11 @@ func newCovCmd() *cobra.Command {
 	o := &covOpts{}
 
 	cmd := &cobra.Command{
-		Use:   "cov [flags] <input>",
+		Use:   "cov [flags] <input>...",
 		Short: "Generate an HTML coverage report",
-		Long: `Parse a coverage file and produce a self-contained HTML report with a
+		Long: `Parse one or more coverage files and produce a self-contained HTML report with a
 collapsible directory tree, per-metric progress bars, and optional threshold
-enforcement.
+enforcement. When multiple files are provided they are merged into a single report.
 
 Supported input formats
   lcov      LCOV .info  (gcov, Istanbul/nyc, Rust tarpaulin, …)
@@ -61,12 +65,14 @@ Thresholds
 
 Examples
   trep cov coverage.out
+  trep cov pkg1.out pkg2.out pkg3.out
   trep cov -o cov.html --threshold-line 80 coverage.info
   trep cov --output-format json coverage.out | jq .summary
   trep cov --annotate --threshold-line 80 coverage.info
   trep cov --fail --save-snapshot snap.json coverage.info
-  trep cov --baseline prev.json coverage.out`,
-		Args:         cobra.ExactArgs(1),
+  trep cov --baseline prev.json coverage.out
+  trep cov --exclude 'vendor/**' --exclude '**/*_gen.go' coverage.out`,
+		Args:         cobra.MinimumNArgs(1),
 		SilenceUsage: true,
 		RunE:         o.run,
 	}
@@ -85,6 +91,7 @@ Examples
 	f.BoolVar   (&o.open,             "open",                   false,  "open the report in the browser after writing")
 	f.BoolVarP  (&o.quiet,            "quiet",            "q", false,   "suppress progress output")
 	f.StringVar (&o.stripPrefix,      "strip-prefix",           "",     "remove this prefix from all file paths")
+	f.StringArrayVar(&o.exclude,       "exclude",                nil,    "glob pattern for paths to exclude (repeatable, e.g. 'vendor/**')")
 	f.BoolVar   (&o.annotate,         "annotate",               false,  "emit CI annotations for files below threshold")
 	f.StringVar (&o.annotatePlatform, "annotate-platform",      "auto", "annotation platform: auto | github | gitlab")
 	f.StringVar (&o.saveSnapshot,     "save-snapshot",           "",    "write run snapshot JSON for future delta comparison")
@@ -95,8 +102,6 @@ Examples
 }
 
 func (o *covOpts) run(_ *cobra.Command, args []string) error {
-	path := args[0]
-
 	var forced covparser.CovParser
 	if o.format != "auto" {
 		var err error
@@ -106,19 +111,37 @@ func (o *covOpts) run(_ *cobra.Command, args []string) error {
 		}
 	}
 
-	if !o.quiet {
-		fmt.Fprintf(os.Stderr, "parsing  %s\n", path)
+	// Parse all input files and merge into a single report.
+	var rep *covmodel.CovReport
+	for _, p := range args {
+		if !o.quiet {
+			fmt.Fprintf(os.Stderr, "parsing  %s\n", p)
+		}
+		r, err := covparser.ParseFile(p, forced, o.stripPrefix)
+		if err != nil {
+			return err
+		}
+		if rep == nil {
+			rep = r
+		} else {
+			rep.Merge(r)
+		}
 	}
-	rep, err := covparser.ParseFile(path, forced, o.stripPrefix)
-	if err != nil {
-		return err
+
+	// Apply --exclude patterns before rendering or threshold checks.
+	if len(o.exclude) > 0 {
+		rep.Files = excludeFiles(rep.Files, o.exclude)
 	}
+
 	if !o.quiet {
 		lt, lc, bt, bc, ft, fc := rep.Stats()
 		fmt.Fprintf(os.Stderr,
 			"         files=%-4d  lines=%d/%d (%.1f%%)  branches=%d/%d  funcs=%d/%d\n",
 			len(rep.Files), lc, lt, rep.LinePct(), bc, bt, fc, ft)
 	}
+
+	// Use the first input path as the basis for the default output name.
+	inputPath := args[0]
 
 	// Annotations.
 	if o.annotate {
@@ -131,6 +154,7 @@ func (o *covOpts) run(_ *cobra.Command, args []string) error {
 	// Delta.
 	var base *delta.Snapshot
 	if o.baseline != "" {
+		var err error
 		base, err = delta.Load(o.baseline)
 		if err != nil {
 			return err
@@ -153,10 +177,10 @@ func (o *covOpts) run(_ *cobra.Command, args []string) error {
 	}
 	outPath := o.output
 	if outPath == "" {
-		if path == "-" {
+		if inputPath == "-" {
 			outPath = "-"
 		} else {
-			outPath = replaceExt(path, ext)
+			outPath = replaceExt(inputPath, ext)
 		}
 	}
 
@@ -232,4 +256,38 @@ func (o *covOpts) run(_ *cobra.Command, args []string) error {
 	}
 
 	return nil
+}
+
+// excludeFiles returns a copy of files with any entry whose path matches one
+// of the glob patterns removed. Patterns follow filepath.Match semantics;
+// a pattern ending in "/**" is treated as a directory prefix match so that
+// "vendor/**" excludes all files under vendor/.
+func excludeFiles(files []*covmodel.FileCov, patterns []string) []*covmodel.FileCov {
+	out := make([]*covmodel.FileCov, 0, len(files))
+	for _, f := range files {
+		if !matchesAny(f.Path, patterns) {
+			out = append(out, f)
+		}
+	}
+	return out
+}
+
+func matchesAny(filePath string, patterns []string) bool {
+	for _, pat := range patterns {
+		if strings.HasSuffix(pat, "/**") {
+			prefix := strings.TrimSuffix(pat, "/**")
+			if strings.HasPrefix(filePath, prefix+"/") || filePath == prefix {
+				return true
+			}
+			continue
+		}
+		if ok, _ := path.Match(pat, filePath); ok {
+			return true
+		}
+		// Also match against the base name so "*.go" works without a full path.
+		if ok, _ := path.Match(pat, path.Base(filePath)); ok {
+			return true
+		}
+	}
+	return false
 }
