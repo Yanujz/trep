@@ -5,6 +5,7 @@ import (
 	"io"
 	"os"
 	"path"
+	"path/filepath"
 	"strings"
 	"time"
 
@@ -111,6 +112,15 @@ func (o *covOpts) run(_ *cobra.Command, args []string) error {
 		default:
 			return fmt.Errorf("unknown --annotate-platform %q: must be auto, github, or gitlab", o.annotatePlatform)
 		}
+	}
+	if err := validateThreshold("--threshold-line", o.thresholdLine); err != nil {
+		return err
+	}
+	if err := validateThreshold("--threshold-branch", o.thresholdBranch); err != nil {
+		return err
+	}
+	if err := validateThreshold("--threshold-func", o.thresholdFunc); err != nil {
+		return err
 	}
 
 	var forced covparser.CovParser
@@ -284,6 +294,8 @@ func excludeFiles(files []*covmodel.FileCov, patterns []string) []*covmodel.File
 }
 
 func matchesAny(filePath string, patterns []string) bool {
+	// Normalise to forward slashes so patterns work on Windows too.
+	filePath = filepath.ToSlash(filePath)
 	for _, pat := range patterns {
 		if strings.HasSuffix(pat, "/**") {
 			prefix := strings.TrimSuffix(pat, "/**")
@@ -301,4 +313,13 @@ func matchesAny(filePath string, patterns []string) bool {
 		}
 	}
 	return false
+}
+
+// validateThreshold returns an error if v is outside the valid (0, 100] range.
+// A zero value means "disabled" and is always accepted.
+func validateThreshold(name string, v float64) error {
+	if v != 0 && (v < 0 || v > 100) {
+		return fmt.Errorf("%s must be between 0 and 100, got %.2f", name, v)
+	}
+	return nil
 }

@@ -83,6 +83,7 @@ Commands:
 | `--threshold-func` | | `0` (off) | Minimum function coverage % |
 | `--fail` | | `false` | Exit 1 if any enabled threshold is not met |
 | `--strip-prefix` | | | Remove path prefix from all file paths |
+| `--exclude` | | | Glob patterns to exclude from the report (repeatable; `vendor/**` excludes a directory tree) |
 | `--open` | | `false` | Open in browser after writing |
 | `--quiet` | `-q` | `false` | Suppress stderr output |
 | `--annotate` | | `false` | Emit CI annotations for files below threshold |
