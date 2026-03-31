@@ -130,22 +130,7 @@ func insertTestCase(
 	smap map[string]*model.Suite,
 	order *[]string,
 ) {
-	// Derive suite name from classname.
-	// JUnit convention: "com.example.ClassName.methodName" → "com.example.ClassName"
-	// GTest convention: classname == suite name already (e.g. "MyTestSuite")
-	suiteName := tc.Classname
-	if suiteName == "" {
-		suiteName = tc.Name
-	}
-	// Strip the trailing segment only when the tool embeds the method name in
-	// the classname (e.g. "com.example.ClassName.testMethod").  Standard JUnit
-	// classnames are already fully-qualified class names, so we must not strip
-	// unless the suffix exactly equals the test case name.
-	if dot := strings.LastIndex(suiteName, "."); dot > 0 && dot < len(suiteName)-1 {
-		if !strings.Contains(suiteName[:dot], "/") && suiteName[dot+1:] == tc.Name {
-			suiteName = suiteName[:dot]
-		}
-	}
+	suiteName := normalizeSuiteName(tc)
 
 	c := model.TestCase{
 		Suite:    suiteName,
@@ -206,4 +191,48 @@ func parseFloatSecs(s string) time.Duration {
 
 func floatSecsToDuration(f float64) time.Duration {
 	return time.Duration(f * float64(time.Second))
+}
+
+func normalizeSuiteName(tc *xmlTestCase) string {
+	name := strings.TrimSpace(tc.Classname)
+	lName := strings.ToLower(name)
+
+	// Filter out useless generic names
+	if name == "" || name == "." || lName == "alltests" || lName == "test suite" || lName == "pytest" {
+		name = ""
+	}
+
+	if name == "" && tc.File != "" {
+		name = tc.File
+	}
+
+	if name == "" {
+		name = tc.Name
+	}
+
+	// Strip the trailing segment only when the tool embeds the method name in
+	// the classname (e.g. "com.example.ClassName.testMethod").
+	if dot := strings.LastIndex(name, "."); dot > 0 && dot < len(name)-1 {
+		ext := strings.ToLower(name[dot:])
+		isExt := ext == ".cpp" || ext == ".c" || ext == ".cc" || ext == ".cxx" ||
+			ext == ".py" || ext == ".go" || ext == ".java" || ext == ".js" || ext == ".ts"
+		
+		if !isExt {
+			// standard logic
+			if !strings.Contains(name[:dot], "/") && name[dot+1:] == tc.Name {
+				name = name[:dot]
+			}
+		}
+	}
+
+	// For slash-separated paths, reduce them if they are too long and unreadable.
+	if strings.Contains(name, "/") || strings.Contains(name, "\\") {
+		name = strings.ReplaceAll(name, "\\", "/")
+		parts := strings.Split(name, "/")
+		if len(parts) > 3 {
+			name = strings.Join(parts[len(parts)-3:], "/")
+		}
+	}
+
+	return name
 }
