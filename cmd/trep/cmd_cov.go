@@ -116,7 +116,7 @@ Examples
 		f.StringArrayVar(&o.exclude, "exclude", o.exclude, "glob pattern for paths to exclude (repeatable, e.g. 'vendor/**')")
 	}
 	f.BoolVar(&o.annotate, "annotate", o.annotate, "emit CI annotations for files below threshold")
-	f.StringVar(&o.annotatePlatform, "annotate-platform", o.annotatePlatform, "annotation platform: auto | github | gitlab")
+	f.StringVar(&o.annotatePlatform, "annotate-platform", o.annotatePlatform, "annotation platform: auto | github | gitlab | azure")
 	f.StringVar(&o.saveSnapshot, "save-snapshot", o.saveSnapshot, "write run snapshot JSON for future delta comparison")
 	f.StringVar(&o.baseline, "baseline", o.baseline, "JSON snapshot from a previous run (enables delta badges)")
 	f.StringVar(&o.baselineLabel, "baseline-label", o.baselineLabel, "human label for the baseline")
@@ -130,9 +130,9 @@ func (o *covOpts) run(_ *cobra.Command, args []string) error {
 	}
 	if o.annotate {
 		switch o.annotatePlatform {
-		case "auto", "github", "gitlab":
+		case "auto", "github", "gitlab", "azure":
 		default:
-			return fmt.Errorf("unknown --annotate-platform %q: must be auto, github, or gitlab", o.annotatePlatform)
+			return fmt.Errorf("unknown --annotate-platform %q: must be auto, github, gitlab, or azure", o.annotatePlatform)
 		}
 	}
 	if err := validateThreshold("--threshold-line", o.thresholdLine); err != nil {

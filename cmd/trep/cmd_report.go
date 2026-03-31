@@ -90,7 +90,7 @@ Examples
 	f.BoolVar(&o.open, "open", o.open, "open both reports in the browser after writing")
 	f.BoolVarP(&o.quiet, "quiet", "q", o.quiet, "suppress progress output")
 	f.BoolVar(&o.annotate, "annotate", o.annotate, "emit CI annotations for failures and low-coverage files")
-	f.StringVar(&o.annotatePlatform, "annotate-platform", o.annotatePlatform, "annotation platform: auto | github | gitlab")
+	f.StringVar(&o.annotatePlatform, "annotate-platform", o.annotatePlatform, "annotation platform: auto | github | gitlab | azure")
 	f.StringVar(&o.saveSnapshot, "save-snapshot", o.saveSnapshot, "write combined snapshot JSON for future delta comparison")
 	f.StringVar(&o.baseline, "baseline", o.baseline, "JSON snapshot from a previous run")
 	f.StringVar(&o.baselineLabel, "baseline-label", o.baselineLabel, "label for the baseline run")
@@ -105,9 +105,9 @@ Examples
 func (o *reportOpts) run(_ *cobra.Command, _ []string) error {
 	if o.annotate {
 		switch o.annotatePlatform {
-		case "auto", "github", "gitlab":
+		case "auto", "github", "gitlab", "azure":
 		default:
-			return fmt.Errorf("unknown --annotate-platform %q: must be auto, github, or gitlab", o.annotatePlatform)
+			return fmt.Errorf("unknown --annotate-platform %q: must be auto, github, gitlab, or azure", o.annotatePlatform)
 		}
 	}
 	if err := validateThreshold("--threshold", o.threshold); err != nil {

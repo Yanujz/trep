@@ -91,7 +91,7 @@ Examples
 	f.BoolVar(&o.open, "open", o.open, "open the report in the browser after writing")
 	f.BoolVarP(&o.quiet, "quiet", "q", o.quiet, "suppress progress output")
 	f.BoolVar(&o.annotate, "annotate", o.annotate, "emit CI annotations for failed tests (GitHub/GitLab auto-detected)")
-	f.StringVar(&o.annotatePlatform, "annotate-platform", o.annotatePlatform, "annotation platform: auto | github | gitlab")
+	f.StringVar(&o.annotatePlatform, "annotate-platform", o.annotatePlatform, "annotation platform: auto | github | gitlab | azure")
 	f.StringVar(&o.saveSnapshot, "save-snapshot", o.saveSnapshot, "write run snapshot JSON for future delta comparison")
 	f.StringVar(&o.baseline, "baseline", o.baseline, "JSON snapshot from a previous run (enables delta badges)")
 	f.StringVar(&o.baselineLabel, "baseline-label", o.baselineLabel, "human label for the baseline (e.g. 'main')")
@@ -105,9 +105,9 @@ func (o *testOpts) run(_ *cobra.Command, args []string) error {
 	}
 	if o.annotate {
 		switch o.annotatePlatform {
-		case "auto", "github", "gitlab":
+		case "auto", "github", "gitlab", "azure":
 		default:
-			return fmt.Errorf("unknown --annotate-platform %q: must be auto, github, or gitlab", o.annotatePlatform)
+			return fmt.Errorf("unknown --annotate-platform %q: must be auto, github, gitlab, or azure", o.annotatePlatform)
 		}
 	}
 

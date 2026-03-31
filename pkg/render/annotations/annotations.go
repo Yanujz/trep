@@ -24,7 +24,9 @@ const (
 	GitHub Platform = "github"
 	// GitLab is the annotation platform identifier for GitLab CI.
 	GitLab Platform = "gitlab"
-	// Auto detects from $GITHUB_ACTIONS / $GITLAB_CI; falls back to GitHub format.
+	// Azure is the annotation platform identifier for Azure DevOps.
+	Azure Platform = "azure"
+	// Auto detects from $GITHUB_ACTIONS / $GITLAB_CI / $TF_BUILD; falls back to GitHub format.
 	Auto Platform = "auto"
 )
 
@@ -36,6 +38,9 @@ func Detect() Platform {
 	if os.Getenv("GITLAB_CI") != "" {
 		return GitLab
 	}
+	if os.Getenv("TF_BUILD") != "" {
+		return Azure
+	}
 	return GitHub
 }
 
@@ -43,6 +48,7 @@ func resolve(p Platform) Platform {
 	if p == Auto {
 		return Detect()
 	}
+	// fallback if passed string does not match any
 	return p
 }
 
@@ -75,6 +81,18 @@ func WriteTestAnnotations(w io.Writer, rep *model.Report, p Platform) error {
 			case GitLab:
 				fmt.Fprintf(w, "\x1b[31mFAIL\x1b[0m  %s :: %s — %s\n",
 					suite.Name, c.Name, title)
+			case Azure:
+				file := c.File
+				if file == "" {
+					file = strings.ReplaceAll(suite.Name, ".", "/")
+				}
+				if c.Line > 0 {
+					fmt.Fprintf(w, "##vso[task.logissue type=error;sourcepath=%s;linenumber=%d;title=%s]%s\n",
+						escVSO(file), c.Line, escVSO(c.Name), escVSO(title))
+				} else {
+					fmt.Fprintf(w, "##vso[task.logissue type=error;sourcepath=%s;title=%s]%s\n",
+						escVSO(file), escVSO(c.Name), escVSO(title))
+				}
 			}
 		}
 	}
@@ -115,6 +133,9 @@ func WriteCovAnnotations(w io.Writer, rep *covmodel.CovReport, threshold float64
 				escGH(e.path), escGH(detail))
 		case GitLab:
 			fmt.Fprintf(w, "\x1b[33mWARN\x1b[0m  %s — %s\n", e.path, detail)
+		case Azure:
+			fmt.Fprintf(w, "##vso[task.logissue type=warning;sourcepath=%s]%s\n",
+				escVSO(e.path), escVSO(detail))
 		}
 	}
 
@@ -126,6 +147,8 @@ func WriteCovAnnotations(w io.Writer, rep *covmodel.CovReport, threshold float64
 			fmt.Fprintf(w, "::error title=Coverage Below Threshold::%s\n", escGH(summary))
 		case GitLab:
 			fmt.Fprintf(w, "\x1b[31mFAIL\x1b[0m  %s\n", summary)
+		case Azure:
+			fmt.Fprintf(w, "##vso[task.logissue type=error]%s\n", escVSO(summary))
 		}
 	}
 	return nil
@@ -137,6 +160,14 @@ func escGH(s string) string {
 	s = strings.ReplaceAll(s, "\n", "%0A")
 	s = strings.ReplaceAll(s, ":", "%3A")
 	s = strings.ReplaceAll(s, ",", "%2C")
+	return s
+}
+
+func escVSO(s string) string {
+	s = strings.ReplaceAll(s, "\r", "%0D")
+	s = strings.ReplaceAll(s, "\n", "%0A")
+	s = strings.ReplaceAll(s, "]", "%5D")
+	s = strings.ReplaceAll(s, ";", "%3B")
 	return s
 }
 
