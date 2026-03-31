@@ -30,7 +30,6 @@ var (
 		"lcov":         "lcov",
 		"info":         "lcov",
 		"cobertura":    "cobertura",
-		"jacoco":       "cobertura",
 		"xml":          "cobertura",
 		"clover":       "clover",
 	}

@@ -19,6 +19,7 @@ import (
 	_ "github.com/Yanujz/trep/pkg/coverage/parser/clover"
 	_ "github.com/Yanujz/trep/pkg/coverage/parser/cobertura"
 	_ "github.com/Yanujz/trep/pkg/coverage/parser/gocover"
+	_ "github.com/Yanujz/trep/pkg/coverage/parser/jacoco"
 	_ "github.com/Yanujz/trep/pkg/coverage/parser/lcov"
 )
 
