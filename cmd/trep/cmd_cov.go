@@ -46,8 +46,21 @@ type covOpts struct {
 	testReportURL string
 }
 
-func newCovCmd() *cobra.Command {
+func newCovCmd(cfg *GlobalConfig) *cobra.Command {
 	o := &covOpts{}
+	if cfg != nil {
+		o.title = cfg.Title
+		o.outFormat = cfg.OutputFormat
+		o.format = cfg.Format
+		o.quiet = cfg.Quiet
+		o.annotate = cfg.Annotate
+		o.annotatePlatform = cfg.AnnotatePlatform
+		o.thresholdLine = cfg.Cov.ThresholdLine
+		o.thresholdBranch = cfg.Cov.ThresholdBranch
+		o.thresholdFunc = cfg.Cov.ThresholdFunc
+		o.exclude = cfg.Cov.Exclude
+		o.failCI = cfg.Cov.Fail
+	}
 
 	cmd := &cobra.Command{
 		Use:   "cov [flags] <input>...",
@@ -84,25 +97,29 @@ Examples
 	}
 
 	f := cmd.Flags()
-	f.StringVarP(&o.output, "output", "o", "", "output file (default: input .html or .json; '-' for stdout)")
-	f.StringVar(&o.outFormat, "output-format", "html", "output format: html | json | sarif")
-	f.StringVarP(&o.format, "format", "f", "auto", "force input format: auto | lcov | gocover | cobertura | clover")
-	f.StringVarP(&o.title, "title", "t", "", "report title")
-	f.Float64Var(&o.thresholdLine, "threshold-line", 0, "minimum line coverage %   (0 = disabled)")
-	f.Float64Var(&o.thresholdBranch, "threshold-branch", 0, "minimum branch coverage % (0 = disabled)")
-	f.Float64Var(&o.thresholdFunc, "threshold-func", 0, "minimum function coverage %(0 = disabled)")
+	f.StringVarP(&o.output, "output", "o", o.output, "output file (default: input .html or .json; '-' for stdout)")
+	f.StringVar(&o.outFormat, "output-format", o.outFormat, "output format: html | json | sarif")
+	f.StringVarP(&o.format, "format", "f", o.format, "force input format: auto | lcov | gocover | cobertura | clover")
+	f.StringVarP(&o.title, "title", "t", o.title, "report title")
+	f.Float64Var(&o.thresholdLine, "threshold-line", o.thresholdLine, "minimum line coverage %   (0 = disabled)")
+	f.Float64Var(&o.thresholdBranch, "threshold-branch", o.thresholdBranch, "minimum branch coverage % (0 = disabled)")
+	f.Float64Var(&o.thresholdFunc, "threshold-func", o.thresholdFunc, "minimum function coverage %(0 = disabled)")
 	// Convenience alias: --threshold sets line threshold.
-	f.Float64Var(&o.thresholdLine, "threshold", 0, "alias for --threshold-line")
-	f.BoolVar(&o.failCI, "fail", false, "exit 1 when any threshold is not met")
-	f.BoolVar(&o.open, "open", false, "open the report in the browser after writing")
-	f.BoolVarP(&o.quiet, "quiet", "q", false, "suppress progress output")
-	f.StringVar(&o.stripPrefix, "strip-prefix", "", "remove this prefix from all file paths")
-	f.StringArrayVar(&o.exclude, "exclude", nil, "glob pattern for paths to exclude (repeatable, e.g. 'vendor/**')")
-	f.BoolVar(&o.annotate, "annotate", false, "emit CI annotations for files below threshold")
-	f.StringVar(&o.annotatePlatform, "annotate-platform", "auto", "annotation platform: auto | github | gitlab")
-	f.StringVar(&o.saveSnapshot, "save-snapshot", "", "write run snapshot JSON for future delta comparison")
-	f.StringVar(&o.baseline, "baseline", "", "JSON snapshot from a previous run (enables delta badges)")
-	f.StringVar(&o.baselineLabel, "baseline-label", "", "human label for the baseline")
+	f.Float64Var(&o.thresholdLine, "threshold", o.thresholdLine, "alias for --threshold-line")
+	f.BoolVar(&o.failCI, "fail", o.failCI, "exit 1 when any threshold is not met")
+	f.BoolVar(&o.open, "open", o.open, "open the report in the browser after writing")
+	f.BoolVarP(&o.quiet, "quiet", "q", o.quiet, "suppress progress output")
+	f.StringVar(&o.stripPrefix, "strip-prefix", o.stripPrefix, "remove this prefix from all file paths")
+	if len(o.exclude) == 0 {
+		f.StringArrayVar(&o.exclude, "exclude", nil, "glob pattern for paths to exclude (repeatable, e.g. 'vendor/**')")
+	} else {
+		f.StringArrayVar(&o.exclude, "exclude", o.exclude, "glob pattern for paths to exclude (repeatable, e.g. 'vendor/**')")
+	}
+	f.BoolVar(&o.annotate, "annotate", o.annotate, "emit CI annotations for files below threshold")
+	f.StringVar(&o.annotatePlatform, "annotate-platform", o.annotatePlatform, "annotation platform: auto | github | gitlab")
+	f.StringVar(&o.saveSnapshot, "save-snapshot", o.saveSnapshot, "write run snapshot JSON for future delta comparison")
+	f.StringVar(&o.baseline, "baseline", o.baseline, "JSON snapshot from a previous run (enables delta badges)")
+	f.StringVar(&o.baselineLabel, "baseline-label", o.baselineLabel, "human label for the baseline")
 
 	return cmd
 }

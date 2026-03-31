@@ -32,10 +32,12 @@ func main() {
 		SilenceUsage: true,
 	}
 
+	cfg := loadConfig()
+
 	root.AddCommand(
-		newTestCmd(),
-		newCovCmd(),
-		newReportCmd(),
+		newTestCmd(cfg),
+		newCovCmd(cfg),
+		newReportCmd(cfg),
 		newCleanCmd(),
 		newCompletionCmd(root),
 	)
