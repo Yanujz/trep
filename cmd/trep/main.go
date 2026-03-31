@@ -36,6 +36,7 @@ func main() {
 		newTestCmd(),
 		newCovCmd(),
 		newReportCmd(),
+		newCleanCmd(),
 		newCompletionCmd(root),
 	)
 
