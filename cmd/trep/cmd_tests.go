@@ -39,8 +39,18 @@ type testOpts struct {
 	covReportURL string
 }
 
-func newTestCmd() *cobra.Command {
+func newTestCmd(cfg *GlobalConfig) *cobra.Command {
 	o := &testOpts{}
+	if cfg != nil {
+		o.title = cfg.Title
+		o.outFormat = cfg.OutputFormat
+		o.format = cfg.Format
+		o.quiet = cfg.Quiet
+		o.annotate = cfg.Annotate
+		o.annotatePlatform = cfg.AnnotatePlatform
+		o.noMerge = cfg.Test.NoMerge
+		o.failCI = cfg.Test.Fail
+	}
 
 	cmd := &cobra.Command{
 		Use:   "test [flags] <input>...",
@@ -72,19 +82,19 @@ Examples
 	}
 
 	f := cmd.Flags()
-	f.StringVarP(&o.output, "output", "o", "", "output file (default: first input .html or .json; '-' for stdout)")
-	f.StringVar(&o.outFormat, "output-format", "html", "output format: html | json | sarif")
-	f.StringVarP(&o.format, "format", "f", "auto", "force input format: auto | junit | gtest | gotest | tap")
-	f.StringVarP(&o.title, "title", "t", "", "report title")
-	f.BoolVar(&o.noMerge, "no-merge", false, "one report per input instead of merging")
-	f.BoolVar(&o.failCI, "fail", false, "exit 1 when any tests failed")
-	f.BoolVar(&o.open, "open", false, "open the report in the browser after writing")
-	f.BoolVarP(&o.quiet, "quiet", "q", false, "suppress progress output")
-	f.BoolVar(&o.annotate, "annotate", false, "emit CI annotations for failed tests (GitHub/GitLab auto-detected)")
-	f.StringVar(&o.annotatePlatform, "annotate-platform", "auto", "annotation platform: auto | github | gitlab")
-	f.StringVar(&o.saveSnapshot, "save-snapshot", "", "write run snapshot JSON for future delta comparison")
-	f.StringVar(&o.baseline, "baseline", "", "JSON snapshot from a previous run (enables delta badges)")
-	f.StringVar(&o.baselineLabel, "baseline-label", "", "human label for the baseline (e.g. 'main')")
+	f.StringVarP(&o.output, "output", "o", o.output, "output file (default: first input .html or .json; '-' for stdout)")
+	f.StringVar(&o.outFormat, "output-format", o.outFormat, "output format: html | json | sarif")
+	f.StringVarP(&o.format, "format", "f", o.format, "force input format: auto | junit | gtest | gotest | tap")
+	f.StringVarP(&o.title, "title", "t", o.title, "report title")
+	f.BoolVar(&o.noMerge, "no-merge", o.noMerge, "one report per input instead of merging")
+	f.BoolVar(&o.failCI, "fail", o.failCI, "exit 1 when any tests failed")
+	f.BoolVar(&o.open, "open", o.open, "open the report in the browser after writing")
+	f.BoolVarP(&o.quiet, "quiet", "q", o.quiet, "suppress progress output")
+	f.BoolVar(&o.annotate, "annotate", o.annotate, "emit CI annotations for failed tests (GitHub/GitLab auto-detected)")
+	f.StringVar(&o.annotatePlatform, "annotate-platform", o.annotatePlatform, "annotation platform: auto | github | gitlab")
+	f.StringVar(&o.saveSnapshot, "save-snapshot", o.saveSnapshot, "write run snapshot JSON for future delta comparison")
+	f.StringVar(&o.baseline, "baseline", o.baseline, "JSON snapshot from a previous run (enables delta badges)")
+	f.StringVar(&o.baselineLabel, "baseline-label", o.baselineLabel, "human label for the baseline (e.g. 'main')")
 
 	return cmd
 }

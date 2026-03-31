@@ -46,8 +46,19 @@ type reportOpts struct {
 	stripPrefix   string
 }
 
-func newReportCmd() *cobra.Command {
+func newReportCmd(cfg *GlobalConfig) *cobra.Command {
 	o := &reportOpts{}
+	if cfg != nil {
+		o.title = cfg.Title
+		o.testFormat = cfg.Format
+		o.covFormat = cfg.Format
+		o.quiet = cfg.Quiet
+		o.annotate = cfg.Annotate
+		o.annotatePlatform = cfg.AnnotatePlatform
+		o.threshold = cfg.Report.Threshold
+		o.failTests = cfg.Report.FailTests
+		o.failCov = cfg.Report.FailCov
+	}
 
 	cmd := &cobra.Command{
 		Use:   "report [flags]",
@@ -68,22 +79,22 @@ Examples
 	f := cmd.Flags()
 	f.StringArrayVar(&o.testInputs, "tests", nil, "test result file(s) (required)")
 	f.StringVar(&o.covInput, "cov", "", "coverage file (required)")
-	f.StringVar(&o.testFormat, "format-test", "auto", "force test input format")
-	f.StringVar(&o.covFormat, "format-cov", "auto", "force coverage input format")
+	f.StringVar(&o.testFormat, "format-test", o.testFormat, "force test input format")
+	f.StringVar(&o.covFormat, "format-cov", o.covFormat, "force coverage input format")
 	f.StringVar(&o.outputDir, "output-dir", ".", "directory to write report files into")
 	f.StringVar(&o.prefix, "prefix", "", "filename prefix (default: 'report' → report_tests.html + report_cov.html)")
-	f.StringVarP(&o.title, "title", "t", "", "report title (applied to both pages)")
-	f.Float64Var(&o.threshold, "threshold", 0, "minimum line coverage % for --fail-cov")
-	f.BoolVar(&o.failTests, "fail-tests", false, "exit 1 if any tests failed")
-	f.BoolVar(&o.failCov, "fail-cov", false, "exit 1 if coverage is below --threshold")
-	f.BoolVar(&o.open, "open", false, "open both reports in the browser after writing")
-	f.BoolVarP(&o.quiet, "quiet", "q", false, "suppress progress output")
-	f.BoolVar(&o.annotate, "annotate", false, "emit CI annotations for failures and low-coverage files")
-	f.StringVar(&o.annotatePlatform, "annotate-platform", "auto", "annotation platform: auto | github | gitlab")
-	f.StringVar(&o.saveSnapshot, "save-snapshot", "", "write combined snapshot JSON for future delta comparison")
-	f.StringVar(&o.baseline, "baseline", "", "JSON snapshot from a previous run")
-	f.StringVar(&o.baselineLabel, "baseline-label", "", "label for the baseline run")
-	f.StringVar(&o.stripPrefix, "strip-prefix", "", "remove prefix from coverage file paths")
+	f.StringVarP(&o.title, "title", "t", o.title, "report title (applied to both pages)")
+	f.Float64Var(&o.threshold, "threshold", o.threshold, "minimum line coverage % for --fail-cov")
+	f.BoolVar(&o.failTests, "fail-tests", o.failTests, "exit 1 if any tests failed")
+	f.BoolVar(&o.failCov, "fail-cov", o.failCov, "exit 1 if coverage is below --threshold")
+	f.BoolVar(&o.open, "open", o.open, "open both reports in the browser after writing")
+	f.BoolVarP(&o.quiet, "quiet", "q", o.quiet, "suppress progress output")
+	f.BoolVar(&o.annotate, "annotate", o.annotate, "emit CI annotations for failures and low-coverage files")
+	f.StringVar(&o.annotatePlatform, "annotate-platform", o.annotatePlatform, "annotation platform: auto | github | gitlab")
+	f.StringVar(&o.saveSnapshot, "save-snapshot", o.saveSnapshot, "write combined snapshot JSON for future delta comparison")
+	f.StringVar(&o.baseline, "baseline", o.baseline, "JSON snapshot from a previous run")
+	f.StringVar(&o.baselineLabel, "baseline-label", o.baselineLabel, "label for the baseline run")
+	f.StringVar(&o.stripPrefix, "strip-prefix", o.stripPrefix, "remove prefix from coverage file paths")
 
 	_ = cmd.MarkFlagRequired("tests")
 	_ = cmd.MarkFlagRequired("cov")
