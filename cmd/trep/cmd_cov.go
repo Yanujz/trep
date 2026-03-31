@@ -6,8 +6,12 @@ import (
 	"os"
 	"path"
 	"path/filepath"
+	"runtime"
 	"strings"
+	"sync"
 	"time"
+
+	"golang.org/x/sync/errgroup"
 
 	"github.com/spf13/cobra"
 
@@ -133,16 +137,36 @@ func (o *covOpts) run(_ *cobra.Command, args []string) error {
 		}
 	}
 
-	// Parse all input files and merge into a single report.
+	// Parse all input files using an error group.
+	reports := make([]*covmodel.CovReport, len(args))
+	eg := new(errgroup.Group)
+	eg.SetLimit(runtime.NumCPU())
+	var mu sync.Mutex
+
+	for i, p := range args {
+		idx, path := i, p
+		eg.Go(func() error {
+			if !o.quiet {
+				mu.Lock()
+				fmt.Fprintf(os.Stderr, "parsing  %s\n", path)
+				mu.Unlock()
+			}
+			r, err := covparser.ParseFile(path, forced, o.stripPrefix)
+			if err != nil {
+				return err
+			}
+			reports[idx] = r
+			return nil
+		})
+	}
+
+	if err := eg.Wait(); err != nil {
+		return err
+	}
+
+	// Merge all reports.
 	var rep *covmodel.CovReport
-	for _, p := range args {
-		if !o.quiet {
-			fmt.Fprintf(os.Stderr, "parsing  %s\n", p)
-		}
-		r, err := covparser.ParseFile(p, forced, o.stripPrefix)
-		if err != nil {
-			return err
-		}
+	for _, r := range reports {
 		if rep == nil {
 			rep = r
 		} else {

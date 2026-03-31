@@ -4,7 +4,11 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"runtime"
+	"sync"
 	"time"
+
+	"golang.org/x/sync/errgroup"
 
 	"github.com/spf13/cobra"
 
@@ -217,21 +221,37 @@ func (o *testOpts) parseInputs(args []string) ([]*model.Report, error) {
 		}
 	}
 
-	reports := make([]*model.Report, 0, len(args))
-	for _, path := range args {
-		if !o.quiet {
-			fmt.Fprintf(os.Stderr, "parsing  %s\n", path)
-		}
-		rep, err := parser.ParseFile(path, forced)
-		if err != nil {
-			return nil, err
-		}
-		if !o.quiet {
-			tot, pass, fail, skip := rep.Stats()
-			fmt.Fprintf(os.Stderr, "         total=%-5d  pass=%-5d  fail=%-5d  skip=%d\n",
-				tot, pass, fail, skip)
-		}
-		reports = append(reports, rep)
+	reports := make([]*model.Report, len(args))
+	eg := new(errgroup.Group)
+	eg.SetLimit(runtime.NumCPU())
+	var mu sync.Mutex
+
+	for i, path := range args {
+		idx, p := i, path
+		eg.Go(func() error {
+			if !o.quiet {
+				mu.Lock()
+				fmt.Fprintf(os.Stderr, "parsing  %s\n", p)
+				mu.Unlock()
+			}
+			rep, err := parser.ParseFile(p, forced)
+			if err != nil {
+				return err
+			}
+			if !o.quiet {
+				tot, pass, fail, skip := rep.Stats()
+				mu.Lock()
+				fmt.Fprintf(os.Stderr, "         total=%-5d  pass=%-5d  fail=%-5d  skip=%d\n",
+					tot, pass, fail, skip)
+				mu.Unlock()
+			}
+			reports[idx] = rep
+			return nil
+		})
+	}
+	
+	if err := eg.Wait(); err != nil {
+		return nil, err
 	}
 
 	if !o.noMerge && len(reports) > 1 {
