@@ -52,11 +52,18 @@ func (Parser) Parse(r io.Reader, source string) (*covmodel.CovReport, error) {
 	fileMap := map[string][]block{}
 	fileOrder := []string{}
 
-	sc := bufio.NewScanner(r)
-	sc.Buffer(make([]byte, 1<<20), 1<<20)
+	rBuf := bufio.NewReader(r)
 
-	for sc.Scan() {
-		line := strings.TrimSpace(sc.Text())
+	for {
+		line, err := rBuf.ReadString('\n')
+		if len(line) == 0 && err != nil {
+			if err == io.EOF {
+				break
+			}
+			return nil, fmt.Errorf("gocover: read error: %w", err)
+		}
+
+		line = strings.TrimSpace(line)
 		if line == "" || strings.HasPrefix(line, "mode:") {
 			continue
 		}
@@ -92,9 +99,6 @@ func (Parser) Parse(r io.Reader, source string) (*covmodel.CovReport, error) {
 			fileMap[filePath] = nil
 		}
 		fileMap[filePath] = append(fileMap[filePath], block{startLine, endLine, stmts, count})
-	}
-	if err := sc.Err(); err != nil {
-		return nil, fmt.Errorf("gocover: scan error: %w", err)
 	}
 
 	// Convert blocks → per-line coverage data.
