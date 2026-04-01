@@ -39,6 +39,7 @@ func main() {
 		newTestCmd(cfg),
 		newCovCmd(cfg),
 		newReportCmd(cfg),
+		newBadgeCmd(cfg),
 		newCleanCmd(),
 		newCompletionCmd(root),
 	)
