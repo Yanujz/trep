@@ -19,6 +19,7 @@ import (
 	covparser "github.com/Yanujz/trep/pkg/coverage/parser"
 	covhtml "github.com/Yanujz/trep/pkg/coverage/render/html"
 	"github.com/Yanujz/trep/pkg/delta"
+	"github.com/Yanujz/trep/pkg/notify"
 	"github.com/Yanujz/trep/pkg/render/annotations"
 	jsonrender "github.com/Yanujz/trep/pkg/render/json"
 	markdownrender "github.com/Yanujz/trep/pkg/render/markdown"
@@ -43,6 +44,7 @@ type covOpts struct {
 	saveSnapshot     string
 	baseline         string
 	baselineLabel    string
+	notifyWebhook    string
 	// set by report command when producing a linked pair
 	testReportURL string
 }
@@ -121,6 +123,7 @@ Examples
 	f.StringVar(&o.saveSnapshot, "save-snapshot", o.saveSnapshot, "write run snapshot JSON for future delta comparison")
 	f.StringVar(&o.baseline, "baseline", o.baseline, "JSON snapshot from a previous run (enables delta badges)")
 	f.StringVar(&o.baselineLabel, "baseline-label", o.baselineLabel, "human label for the baseline")
+	f.StringVar(&o.notifyWebhook, "notify-webhook", o.notifyWebhook, "HTTP URL to POST coverage summary after completion")
 
 	return cmd
 }
@@ -334,6 +337,17 @@ func (o *covOpts) run(_ *cobra.Command, args []string) error {
 		}
 		if failed {
 			os.Exit(1)
+		}
+	}
+
+	if o.notifyWebhook != "" {
+		lt, lc, _, _, _, _ := rep.Stats()
+		if err := notify.PostCov(o.notifyWebhook, rep.LinePct(), lc, lt, rep.BranchPct(), rep.FuncPct(), len(rep.Files)); err != nil {
+			if !o.quiet {
+				fmt.Fprintf(os.Stderr, "webhook: %v\n", err)
+			}
+		} else if !o.quiet {
+			fmt.Fprintf(os.Stderr, "webhook notification sent\n")
 		}
 	}
 
