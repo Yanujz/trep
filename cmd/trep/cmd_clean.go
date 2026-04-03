@@ -57,15 +57,16 @@ func (o *cleanOpts) run(_ *cobra.Command, args []string) error {
 		}
 
 		isTrep := false
-		if ext == ".html" {
-			isTrep = bytes.Contains(b, []byte("tree-map")) || 
+		switch ext {
+		case ".html":
+			isTrep = bytes.Contains(b, []byte("tree-map")) ||
 				bytes.Contains(b, []byte(`color:var(--text-main)">trep</span>`)) ||
 				bytes.Contains(b, []byte(`color:#0f172a">trep</span>`)) ||
 				bytes.Contains(b, []byte(`<!-- ── Summary card ──`))
-		} else if ext == ".json" {
+		case ".json":
 			isTrep = bytes.Contains(b, []byte(`"generated_at"`)) &&
 				(bytes.Contains(b, []byte(`"suites"`)) || bytes.Contains(b, []byte(`"branch_pct"`)))
-		} else if ext == ".sarif" {
+		case ".sarif":
 			isTrep = bytes.Contains(b, []byte(`"name": "trep"`))
 		}
 

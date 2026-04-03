@@ -223,7 +223,7 @@ func normalizeSuiteName(tc *xmlTestCase) string {
 		ext := strings.ToLower(name[dot:])
 		isExt := ext == ".cpp" || ext == ".c" || ext == ".cc" || ext == ".cxx" ||
 			ext == ".py" || ext == ".go" || ext == ".java" || ext == ".js" || ext == ".ts"
-		
+
 		if !isExt {
 			// standard logic
 			if !strings.Contains(name[:dot], "/") && name[dot+1:] == tc.Name {

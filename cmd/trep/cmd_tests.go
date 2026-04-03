@@ -281,7 +281,7 @@ func (o *testOpts) parseInputs(args []string) ([]*model.Report, error) {
 			return nil
 		})
 	}
-	
+
 	if err := eg.Wait(); err != nil {
 		return nil, err
 	}

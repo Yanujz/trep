@@ -59,8 +59,8 @@ type nunitCase struct {
 
 // xUnit types
 type xunitAssemblies struct {
-	XMLName    xml.Name         `xml:"assemblies"`
-	Assemblies []xunitAssembly  `xml:"assembly"`
+	XMLName    xml.Name        `xml:"assemblies"`
+	Assemblies []xunitAssembly `xml:"assembly"`
 }
 
 type xunitAssembly struct {
@@ -74,10 +74,10 @@ type xunitCollection struct {
 }
 
 type xunitTest struct {
-	Name   string  `xml:"name,attr"`
-	Method string  `xml:"method,attr"`
-	Result string  `xml:"result,attr"`
-	Time   float64 `xml:"time,attr"`
+	Name    string  `xml:"name,attr"`
+	Method  string  `xml:"method,attr"`
+	Result  string  `xml:"result,attr"`
+	Time    float64 `xml:"time,attr"`
 	Failure *struct {
 		Message    string `xml:"message"`
 		StackTrace string `xml:"stack-trace"`
