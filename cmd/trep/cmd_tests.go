@@ -5,6 +5,7 @@ import (
 	"io"
 	"os"
 	"runtime"
+	"strings"
 	"sync"
 	"time"
 
@@ -12,6 +13,7 @@ import (
 
 	"github.com/spf13/cobra"
 
+	"github.com/Yanujz/trep/pkg/codeowners"
 	"github.com/Yanujz/trep/pkg/delta"
 	"github.com/Yanujz/trep/pkg/model"
 	"github.com/Yanujz/trep/pkg/parser"
@@ -36,6 +38,7 @@ type testOpts struct {
 	saveSnapshot     string
 	baseline         string
 	baselineLabel    string
+	codeownersFile   string
 	// set by report command when producing a linked pair
 	covReportURL string
 }
@@ -96,6 +99,7 @@ Examples
 	f.StringVar(&o.saveSnapshot, "save-snapshot", o.saveSnapshot, "write run snapshot JSON for future delta comparison")
 	f.StringVar(&o.baseline, "baseline", o.baseline, "JSON snapshot from a previous run (enables delta badges)")
 	f.StringVar(&o.baselineLabel, "baseline-label", o.baselineLabel, "human label for the baseline (e.g. 'main')")
+	f.StringVar(&o.codeownersFile, "codeowners", o.codeownersFile, "path to CODEOWNERS file for annotating failures with owners")
 
 	return cmd
 }
@@ -124,6 +128,13 @@ func (o *testOpts) run(_ *cobra.Command, args []string) error {
 			if err := annotations.WriteTestAnnotations(os.Stderr, rep, p); err != nil {
 				return err
 			}
+		}
+	}
+
+	// Annotate failures with CODEOWNERS if requested.
+	if o.codeownersFile != "" {
+		if err := applyCodeowners(reports, o.codeownersFile); err != nil && !o.quiet {
+			fmt.Fprintf(os.Stderr, "codeowners: %v\n", err)
 		}
 	}
 
@@ -313,4 +324,39 @@ func (o *testOpts) resolveOutput(args []string, rep *model.Report, idx int, ext 
 		out = fmt.Sprintf("%s_%02d%s", stripExt(base), idx+1, ext)
 	}
 	return out
+}
+
+func applyCodeowners(reports []*model.Report, coPath string) error {
+	f, err := os.Open(coPath)
+	if err != nil {
+		return err
+	}
+	defer f.Close()
+	owners := codeowners.Parse(f)
+	for _, rep := range reports {
+		for si := range rep.Suites {
+			for ci := range rep.Suites[si].Cases {
+				tc := &rep.Suites[si].Cases[ci]
+				if tc.Status != model.StatusFail {
+					continue
+				}
+				filePath := tc.File
+				if filePath == "" {
+					filePath = tc.Suite
+				}
+				if filePath == "" {
+					continue
+				}
+				if ow := owners.Match(filePath); len(ow) > 0 {
+					ownerStr := strings.Join(ow, " ")
+					if tc.Message != "" {
+						tc.Message = "[" + ownerStr + "] " + tc.Message
+					} else {
+						tc.Message = "[owners: " + ownerStr + "]"
+					}
+				}
+			}
+		}
+	}
+	return nil
 }
