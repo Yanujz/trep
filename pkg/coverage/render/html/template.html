@@ -15,6 +15,18 @@
   --crit-bg:#fce7f3; --crit-text:#9d174d; --crit-border:#fbcfe8;
   --neutral-bg:#f1f5f9; --delta-up:#166534; --delta-dn:#991b1b;
 }
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg:#0f172a; --surface:#1e293b; --border:#334155;
+    --text-main:#f8fafc; --text-muted:#94a3b8;
+    --primary:#3b82f6; --primary-hover:#60a5fa;
+    --pass-bg:#064e3b; --pass-text:#34d399; --pass-border:#065f46; --pass-solid:#10b981;
+    --warn-bg:#78350f; --warn-text:#fbbf24; --warn-border:#92400e; --warn-solid:#f59e0b;
+    --fail-bg:#7f1d1d; --fail-text:#f87171; --fail-border:#991b1b; --fail-solid:#ef4444;
+    --crit-bg:#4c0519; --crit-text:#f9a8d4; --crit-border:#9d174d;
+    --neutral-bg:#0f172a; --delta-up:#34d399; --delta-dn:#f87171;
+  }
+}
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 body { font-family:'Inter',-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
        font-size:14px; background:var(--bg); color:var(--text-main); line-height:1.5; padding:24px; }
@@ -86,18 +98,18 @@ input[type="search"]:focus { outline:none; border-color:var(--primary);
 
 /* Table */
 table { width:100%; border-collapse:collapse; text-align:left; table-layout:fixed; }
-th { background:#f8fafc; padding:11px 20px; font-size:.72rem; text-transform:uppercase;
+th { background:var(--bg); padding:11px 20px; font-size:.72rem; text-transform:uppercase;
      letter-spacing:.05em; color:var(--text-muted); font-weight:700; border-bottom:1px solid var(--border);
      cursor:pointer; user-select:none; white-space:nowrap; }
-th:hover { color:var(--text-main); background:#f1f5f9; }
+th:hover { color:var(--text-main); background:var(--bg); }
 th.sa::after { content:" \25B2"; }
 th.sd::after { content:" \25BC"; }
 td { padding:9px 20px; border-bottom:1px solid var(--border); vertical-align:middle; overflow:hidden; }
 tr:last-child td { border-bottom:none; }
-tr:hover td { background:#f8fafc; }
+tr:hover td { background:var(--bg); }
 
 /* Dir header rows */
-.dir-hdr { background:#f1f5f9; cursor:pointer; border-bottom:1px solid var(--border); }
+.dir-hdr { background:var(--neutral-bg); cursor:pointer; border-bottom:1px solid var(--border); }
 .dir-hdr:hover { background:#e2e8f0; }
 .dir-hdr td { padding:9px 20px; vertical-align:middle; }
 .dir-title { font-weight:600; color:var(--text-main); font-size:.875rem; display:flex; align-items:center; gap:8px; }
@@ -111,7 +123,7 @@ tr:hover td { background:#f8fafc; }
 .bg-pass { background:var(--pass-bg); color:var(--pass-text); border:1px solid var(--pass-border); }
 .bg-warn { background:var(--warn-bg); color:var(--warn-text); border:1px solid var(--warn-border); }
 .bg-fail { background:var(--fail-bg); color:var(--fail-text); border:1px solid var(--fail-border); }
-.bg-none { background:#f1f5f9; color:var(--text-muted); border:1px solid var(--border); }
+.bg-none { background:var(--neutral-bg); color:var(--text-muted); border:1px solid var(--border); }
 
 /* Mini progress bar in table */
 .cov-bar { display:flex; align-items:center; gap:8px; }
@@ -125,7 +137,7 @@ tr:hover td { background:#f8fafc; }
          border-top:1px solid var(--border); background:var(--surface); }
 .pager button { padding:7px 14px; border:1px solid var(--border); background:var(--surface);
                 color:var(--text-main); border-radius:8px; cursor:pointer; font-size:.875rem; font-weight:500; }
-.pager button:hover:not(:disabled) { background:#f1f5f9; }
+.pager button:hover:not(:disabled) { background:var(--neutral-bg); }
 .pager button:disabled { opacity:.4; cursor:not-allowed; }
 .pager button.active { background:var(--text-main); color:#fff; border-color:var(--text-main); pointer-events:none; }
 </style>
