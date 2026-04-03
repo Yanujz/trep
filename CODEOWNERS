@@ -1,0 +1,17 @@
+# Global fallback — all PRs require review from a maintainer
+*  @Yanujz
+
+# Parser implementations
+/pkg/parser/  @Yanujz
+/pkg/coverage/parser/  @Yanujz
+
+# Renderers
+/pkg/render/  @Yanujz
+/pkg/coverage/render/  @Yanujz
+
+# CLI commands
+/cmd/  @Yanujz
+
+# CI / release infrastructure
+/.github/  @Yanujz
+/.goreleaser.yml  @Yanujz
