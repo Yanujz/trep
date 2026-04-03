@@ -13,13 +13,14 @@ linters:
     - unused
     - gofmt
     - goimports
-
-linters-settings:
-  goimports:
-    local-prefixes: github.com/Yanujz/trep
+  settings:
+    goimports:
+      local-prefixes:
+        - github.com/Yanujz/trep
 
 issues:
-  exclude-rules:
-    - path: _test\.go
-      linters:
-        - errcheck
+  exclusions:
+    rules:
+      - path: _test\.go
+        linters:
+          - errcheck
