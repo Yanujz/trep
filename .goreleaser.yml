@@ -51,6 +51,17 @@ brews:
     test: |
       system "#{bin}/trep", "--version"
 
+scoops:
+  - name: trep
+    repository:
+      owner: Yanujz
+      name: scoop-bucket
+      branch: main
+      token: "{{ .Env.GITHUB_TOKEN }}"
+    homepage: "https://github.com/Yanujz/trep"
+    description: "Convert test results and coverage data to rich self-contained HTML reports"
+    license: MIT
+
 changelog:
   sort: asc
   filters:
