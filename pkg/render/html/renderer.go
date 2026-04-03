@@ -43,8 +43,8 @@ func (Renderer) Render(w io.Writer, rep *model.Report, opts Options) error {
 			}
 		}
 	}
-	// Each row: [suite, name, result, dur_ms, detail, stdout (, file, line)]
-	// file/line are appended only when present (GTest).
+	// Each row: [suite, name, result, dur_ms, detail, stdout (, file, line), attachJSON]
+	// file/line are appended only when present (GTest). attachJSON is always appended.
 	rows := make([][]any, 0, total)
 	for _, suite := range rep.Suites {
 		for _, c := range suite.Cases {
@@ -63,6 +63,12 @@ func (Renderer) Render(w io.Writer, rep *model.Report, opts Options) error {
 			if c.File != "" || c.Line > 0 {
 				row = append(row, c.File, c.Line)
 			}
+			attachJSON := "[]"
+			if len(c.Attachments) > 0 {
+				b, _ := json.Marshal(c.Attachments)
+				attachJSON = string(b)
+			}
+			row = append(row, attachJSON)
 			rows = append(rows, row)
 		}
 	}

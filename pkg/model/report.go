@@ -18,14 +18,15 @@ const (
 
 // TestCase holds the normalised result of one test.
 type TestCase struct {
-	Suite    string // Logical grouping: classname, package path, file name, …
-	Name     string // Test identifier
-	Status   Status
-	Duration time.Duration
-	Message  string // Failure / error / skip reason
-	Stdout   string // Captured output; non-empty only for failures
-	File     string // Source file path (available from GTest XML)
-	Line     int    // Source line number (available from GTest XML)
+	Suite       string // Logical grouping: classname, package path, file name, …
+	Name        string // Test identifier
+	Status      Status
+	Duration    time.Duration
+	Message     string // Failure / error / skip reason
+	Stdout      string // Captured output; non-empty only for failures
+	File        string // Source file path (available from GTest XML)
+	Line        int    // Source line number (available from GTest XML)
+	Attachments []string // file paths or base64 data URIs (e.g. from Playwright/Cypress)
 }
 
 // Suite groups related test cases under one name.

@@ -145,6 +145,7 @@ func insertTestCase(
 	}
 
 	stdout := strings.TrimSpace(tc.SystemOut)
+	attachments := extractAttachments(stdout)
 
 	switch {
 	case tc.Failure != nil:
@@ -174,6 +175,10 @@ func insertTestCase(
 
 	default:
 		c.Status = model.StatusPass
+	}
+
+	if len(attachments) > 0 {
+		c.Attachments = attachments
 	}
 
 	if _, exists := smap[suiteName]; !exists {
@@ -293,4 +298,18 @@ func detectFlaky(suite *model.Suite) {
 		}
 	}
 	suite.Cases = keep
+}
+
+// extractAttachments scans text for [[ATTACHMENT|path]] markers (used by
+// Playwright, Cypress and similar frameworks) and returns the extracted paths.
+func extractAttachments(text string) []string {
+	var attachments []string
+	parts := strings.Split(text, "[[ATTACHMENT|")
+	for _, part := range parts[1:] {
+		end := strings.Index(part, "]]")
+		if end > 0 {
+			attachments = append(attachments, strings.TrimSpace(part[:end]))
+		}
+	}
+	return attachments
 }
