@@ -39,6 +39,13 @@ brew install trep
 
 > **Note:** The Homebrew formula is updated automatically on each tagged release. If no release has been published yet, install via `go install` below.
 
+### Scoop (Windows)
+
+```sh
+scoop bucket add trep https://github.com/Yanujz/scoop-bucket
+scoop install trep
+```
+
 ### go install
 
 ```sh
