@@ -14,6 +14,7 @@
   --pass-bg: #dcfce7; --pass-text: #166534; --pass-border: #bbf7d0; --pass-solid: #22c55e;
   --fail-bg: #fee2e2; --fail-text: #991b1b; --fail-border: #fecaca; --fail-solid: #ef4444;
   --skip-bg: #fef3c7; --skip-text: #92400e; --skip-border: #fde68a; --skip-solid: #f59e0b;
+  --flaky-bg: #fef9c3; --flaky-text: #854d0e; --flaky-border: #fef08a; --flaky-solid: #eab308;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -26,6 +27,7 @@
     --pass-bg: #064e3b; --pass-text: #34d399; --pass-border: #065f46; --pass-solid: #10b981;
     --fail-bg: #7f1d1d; --fail-text: #f87171; --fail-border: #991b1b; --fail-solid: #ef4444;
     --skip-bg: #78350f; --skip-text: #fbbf24; --skip-border: #92400e; --skip-solid: #f59e0b;
+    --flaky-bg: #713f12; --flaky-text: #fde047; --flaky-border: #854d0e; --flaky-solid: #eab308;
   }
 }
 
@@ -84,6 +86,7 @@ input[type="search"]:focus {
 .filter-btn.active.f-pass { background: var(--pass-bg); color: var(--pass-text); border-color: var(--pass-border); }
 .filter-btn.active.f-fail { background: var(--fail-bg); color: var(--fail-text); border-color: var(--fail-border); }
 .filter-btn.active.f-skip { background: var(--skip-bg); color: var(--skip-text); border-color: var(--skip-border); }
+.filter-btn.active.f-flaky { background: var(--flaky-bg); color: var(--flaky-text); border-color: var(--flaky-border); }
 
 .view-toggle {
   margin-left: auto; padding: 6px 16px; border-radius: 8px;
@@ -131,6 +134,7 @@ tr:hover td { background: var(--surface-hover); }
 .b-pass { background: var(--pass-bg); color: var(--pass-text); border-color: var(--pass-border); }
 .b-fail { background: var(--fail-bg); color: var(--fail-text); border-color: var(--fail-border); }
 .b-skip { background: var(--skip-bg); color: var(--skip-text); border-color: var(--skip-border); }
+.b-flaky { background: var(--flaky-bg); color: var(--flaky-text); border-color: var(--flaky-border); }
 
 .suite-chip {
   display: inline-block; font-size: .75rem; color: var(--primary);
@@ -245,6 +249,7 @@ tr:hover td { background: var(--surface-hover); }
       <button class="filter-btn f-pass"        id="f-pass" onclick="setFilter('pass')">Passed</button>
       <button class="filter-btn f-fail"        id="f-fail" onclick="setFilter('fail')">Failed</button>
       <button class="filter-btn f-skip"        id="f-skip" onclick="setFilter('skip')">Skipped</button>
+      <button class="filter-btn f-flaky"       id="f-flaky" onclick="setFilter('flaky')">🔀 Flaky <span id="cnt-flaky">%%FLAKY%%</span></button>
       <button class="view-toggle" id="v-toggle" onclick="toggleView()">View: Grouped</button>
       <div class="pager-info" id="cnt"></div>
     </div>
@@ -418,7 +423,7 @@ document.getElementById('srch').addEventListener('input', function() {
 
 function setFilter(f) {
   curFilter = f;
-  ['all','pass','fail','skip'].forEach(k => {
+  ['all','pass','fail','skip','flaky'].forEach(k => {
     document.getElementById('f-'+k).className =
       'filter-btn f-'+k + (k === f ? ' active' : '');
   });

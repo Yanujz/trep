@@ -7,11 +7,13 @@ import "time"
 // Status is the outcome of a single test case.
 type Status string
 
-// StatusPass, StatusFail, and StatusSkip are the possible test outcome values.
+// StatusPass, StatusFail, StatusSkip, and StatusFlaky are the possible test outcome values.
 const (
-	StatusPass Status = "pass"
-	StatusFail Status = "fail"
-	StatusSkip Status = "skip"
+	StatusPass  Status = "pass"
+	StatusFail  Status = "fail"
+	StatusSkip  Status = "skip"
+	// StatusFlaky indicates a test that failed but ultimately passed after retries.
+	StatusFlaky Status = "flaky"
 )
 
 // TestCase holds the normalised result of one test.
@@ -53,6 +55,8 @@ func (r *Report) Stats() (total, passed, failed, skipped int) {
 				failed++
 			case StatusSkip:
 				skipped++
+			case StatusFlaky:
+				passed++ // flaky = eventually passed
 			}
 		}
 	}

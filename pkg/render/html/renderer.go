@@ -34,6 +34,15 @@ func (Renderer) Name() string { return "html" }
 func (Renderer) Render(w io.Writer, rep *model.Report, opts Options) error {
 	total, passed, failed, skipped := rep.Stats()
 
+	// Count flaky separately for the %%FLAKY%% template placeholder.
+	flaky := 0
+	for _, s := range rep.Suites {
+		for _, c := range s.Cases {
+			if c.Status == model.StatusFlaky {
+				flaky++
+			}
+		}
+	}
 	// Each row: [suite, name, result, dur_ms, detail, stdout (, file, line)]
 	// file/line are appended only when present (GTest).
 	rows := make([][]any, 0, total)
@@ -153,6 +162,7 @@ func (Renderer) Render(w io.Writer, rep *model.Report, opts Options) error {
 		"%%PASSED%%", fmt.Sprintf("%d", passed),
 		"%%FAILED%%", fmt.Sprintf("%d", failed),
 		"%%SKIPPED%%", fmt.Sprintf("%d", skipped),
+		"%%FLAKY%%", fmt.Sprintf("%d", flaky),
 		"%%PCT_PASS%%", pct(passed, total),
 		"%%PCT_FAIL%%", pct(failed, total),
 		"%%PCT_SKIP%%", pct(skipped, total),
