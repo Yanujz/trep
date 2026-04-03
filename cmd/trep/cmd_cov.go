@@ -21,6 +21,7 @@ import (
 	"github.com/Yanujz/trep/pkg/delta"
 	"github.com/Yanujz/trep/pkg/render/annotations"
 	jsonrender "github.com/Yanujz/trep/pkg/render/json"
+	markdownrender "github.com/Yanujz/trep/pkg/render/markdown"
 	sarifrender "github.com/Yanujz/trep/pkg/render/sarif"
 )
 
@@ -98,7 +99,7 @@ Examples
 
 	f := cmd.Flags()
 	f.StringVarP(&o.output, "output", "o", o.output, "output file (default: input .html or .json; '-' for stdout)")
-	f.StringVar(&o.outFormat, "output-format", o.outFormat, "output format: html | json | sarif")
+	f.StringVar(&o.outFormat, "output-format", o.outFormat, "output format: html | json | sarif | markdown")
 	f.StringVarP(&o.format, "format", "f", o.format, "force input format: auto | lcov | gocover | cobertura | clover")
 	f.StringVarP(&o.title, "title", "t", o.title, "report title")
 	f.Float64Var(&o.thresholdLine, "threshold-line", o.thresholdLine, "minimum line coverage %   (0 = disabled)")
@@ -125,8 +126,8 @@ Examples
 }
 
 func (o *covOpts) run(_ *cobra.Command, args []string) error {
-	if o.outFormat != "html" && o.outFormat != "json" && o.outFormat != "sarif" {
-		return fmt.Errorf("unknown --output-format %q: must be html, json, or sarif", o.outFormat)
+	if o.outFormat != "html" && o.outFormat != "json" && o.outFormat != "sarif" && o.outFormat != "markdown" {
+		return fmt.Errorf("unknown --output-format %q: must be html, json, sarif, or markdown", o.outFormat)
 	}
 	if o.annotate {
 		switch o.annotatePlatform {
@@ -240,6 +241,8 @@ func (o *covOpts) run(_ *cobra.Command, args []string) error {
 		ext = ".json"
 	case "sarif":
 		ext = ".sarif"
+	case "markdown":
+		ext = ".md"
 	}
 	outPath := o.output
 	if outPath == "" {
@@ -262,6 +265,12 @@ func (o *covOpts) run(_ *cobra.Command, args []string) error {
 			return sarifrender.RenderCov(w, rep, o.thresholdLine, version)
 		}); err != nil {
 			return fmt.Errorf("render sarif %s: %w", outPath, err)
+		}
+	case "markdown":
+		if err := writeFile(outPath, func(w io.Writer) error {
+			return markdownrender.RenderCov(w, rep)
+		}); err != nil {
+			return fmt.Errorf("render markdown %s: %w", outPath, err)
 		}
 	default:
 		opts := covhtml.Options{

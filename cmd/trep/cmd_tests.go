@@ -18,6 +18,7 @@ import (
 	"github.com/Yanujz/trep/pkg/render/annotations"
 	htmlrender "github.com/Yanujz/trep/pkg/render/html"
 	jsonrender "github.com/Yanujz/trep/pkg/render/json"
+	markdownrender "github.com/Yanujz/trep/pkg/render/markdown"
 	sarifrender "github.com/Yanujz/trep/pkg/render/sarif"
 )
 
@@ -83,7 +84,7 @@ Examples
 
 	f := cmd.Flags()
 	f.StringVarP(&o.output, "output", "o", o.output, "output file (default: first input .html or .json; '-' for stdout)")
-	f.StringVar(&o.outFormat, "output-format", o.outFormat, "output format: html | json | sarif")
+	f.StringVar(&o.outFormat, "output-format", o.outFormat, "output format: html | json | sarif | markdown")
 	f.StringVarP(&o.format, "format", "f", o.format, "force input format: auto | junit | gtest | gotest | tap")
 	f.StringVarP(&o.title, "title", "t", o.title, "report title")
 	f.BoolVar(&o.noMerge, "no-merge", o.noMerge, "one report per input instead of merging")
@@ -100,8 +101,8 @@ Examples
 }
 
 func (o *testOpts) run(_ *cobra.Command, args []string) error {
-	if o.outFormat != "html" && o.outFormat != "json" && o.outFormat != "sarif" {
-		return fmt.Errorf("unknown --output-format %q: must be html, json, or sarif", o.outFormat)
+	if o.outFormat != "html" && o.outFormat != "json" && o.outFormat != "sarif" && o.outFormat != "markdown" {
+		return fmt.Errorf("unknown --output-format %q: must be html, json, sarif, or markdown", o.outFormat)
 	}
 	if o.annotate {
 		switch o.annotatePlatform {
@@ -150,6 +151,8 @@ func (o *testOpts) run(_ *cobra.Command, args []string) error {
 			ext = ".json"
 		case "sarif":
 			ext = ".sarif"
+		case "markdown":
+			ext = ".md"
 		}
 		outPath := o.resolveOutput(args, rep, i, ext)
 
@@ -170,6 +173,14 @@ func (o *testOpts) run(_ *cobra.Command, args []string) error {
 			}
 			_, _, fail, _ := rep.Stats()
 			logSize(o.quiet, outPath, fmt.Sprintf(", %d failures", fail))
+		case "markdown":
+			if err := writeFile(outPath, func(w io.Writer) error {
+				return markdownrender.RenderTest(w, rep)
+			}); err != nil {
+				return fmt.Errorf("render markdown %s: %w", outPath, err)
+			}
+			tot, _, fail, _ := rep.Stats()
+			logSize(o.quiet, outPath, fmt.Sprintf(", %d tests, %d failed", tot, fail))
 		default:
 			var d *delta.Delta
 			if base != nil {
