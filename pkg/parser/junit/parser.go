@@ -118,7 +118,9 @@ func (Parser) Parse(r io.Reader, source string) (*model.Report, error) {
 	}
 
 	for _, name := range suiteOrder {
-		rep.Suites = append(rep.Suites, *suiteMap[name])
+		suite := *suiteMap[name]
+		detectFlaky(&suite)
+		rep.Suites = append(rep.Suites, suite)
 	}
 	return rep, nil
 }
@@ -235,4 +237,60 @@ func normalizeSuiteName(tc *xmlTestCase) string {
 	}
 
 	return name
+}
+
+// detectFlaky collapses duplicate test names with mixed results (some failures
+// and at least one pass) into a single StatusFlaky test case, keeping the best
+// (passing) run's metadata.
+func detectFlaky(suite *model.Suite) {
+	type entry struct {
+		statuses []model.Status
+		indices  []int
+		best     *model.TestCase
+	}
+	byName := make(map[string]*entry)
+	for i := range suite.Cases {
+		c := &suite.Cases[i]
+		e, ok := byName[c.Name]
+		if !ok {
+			e = &entry{}
+			byName[c.Name] = e
+		}
+		e.statuses = append(e.statuses, c.Status)
+		e.indices = append(e.indices, i)
+		if e.best == nil || c.Status == model.StatusPass {
+			e.best = c
+		}
+	}
+	var keep []model.TestCase
+	seen := make(map[string]bool)
+	for i, c := range suite.Cases {
+		e := byName[c.Name]
+		if seen[c.Name] {
+			continue
+		}
+		seen[c.Name] = true
+		if len(e.indices) <= 1 {
+			keep = append(keep, suite.Cases[i])
+			continue
+		}
+		hasFail := false
+		hasPass := false
+		for _, s := range e.statuses {
+			if s == model.StatusFail {
+				hasFail = true
+			}
+			if s == model.StatusPass {
+				hasPass = true
+			}
+		}
+		if hasFail && hasPass {
+			tc := *e.best
+			tc.Status = model.StatusFlaky
+			keep = append(keep, tc)
+		} else {
+			keep = append(keep, suite.Cases[i])
+		}
+	}
+	suite.Cases = keep
 }
