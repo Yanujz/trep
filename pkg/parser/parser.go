@@ -31,12 +31,14 @@ var (
 
 	// aliases maps user-facing alternate names to canonical parser names.
 	aliases = map[string]string{
-		"gtest": "junit",
-		"ctest": "junit",
-		"maven": "junit",
-		"xml":   "junit",
-		"go":    "gotest",
-		"json":  "gotest",
+		"gtest":  "junit",
+		"ctest":  "junit",
+		"maven":  "junit",
+		"xml":    "junit",
+		"go":     "gotest",
+		"json":   "gotest",
+		"xunit":  "nunit",
+		"nunit3": "nunit",
 	}
 )
 

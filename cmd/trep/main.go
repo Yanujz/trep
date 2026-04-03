@@ -11,8 +11,10 @@ import (
 	"github.com/spf13/cobra"
 
 	// Register test parsers.
+	_ "github.com/Yanujz/trep/pkg/parser/cucumber"
 	_ "github.com/Yanujz/trep/pkg/parser/gotest"
 	_ "github.com/Yanujz/trep/pkg/parser/junit"
+	_ "github.com/Yanujz/trep/pkg/parser/nunit"
 	_ "github.com/Yanujz/trep/pkg/parser/tap"
 
 	// Register coverage parsers.
