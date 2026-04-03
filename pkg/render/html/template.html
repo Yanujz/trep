@@ -160,6 +160,24 @@ tr:hover td { background: var(--surface-hover); }
                    font-size: .75rem; color: var(--text-muted); text-decoration: none; }
 .attachment-link:hover { color: var(--text-main); background: var(--surface-hover); }
 
+/* ── Timeline / Gantt ─────────────────────────────────────────────────────── */
+#timeline-view { display: none; padding: 24px; overflow-x: auto; }
+#timeline-view.visible { display: block; }
+.gantt-suite { margin-bottom: 16px; }
+.gantt-suite-label { font-size: .75rem; font-weight: 700; color: var(--text-muted);
+                     text-transform: uppercase; letter-spacing: .05em; margin-bottom: 6px; }
+.gantt-row { display: flex; align-items: center; gap: 8px; margin-bottom: 4px; min-height: 24px; }
+.gantt-label { width: 200px; min-width: 200px; font-size: .75rem; overflow: hidden;
+               text-overflow: ellipsis; white-space: nowrap; color: var(--text-main); }
+.gantt-track { flex: 1; background: var(--border); border-radius: 3px; height: 16px;
+               position: relative; min-width: 1px; }
+.gantt-bar { height: 100%; border-radius: 3px; position: absolute; left: 0; min-width: 4px; }
+.gantt-bar.pass  { background: var(--pass-solid); }
+.gantt-bar.fail  { background: var(--fail-solid); }
+.gantt-bar.skip  { background: var(--skip-solid); }
+.gantt-bar.flaky { background: var(--skip-solid); }
+.gantt-dur { font-size: .72rem; color: var(--text-muted); width: 60px; text-align: right; }
+
 .error-msg {
   margin-top: 6px; color: var(--fail-text); font-size: .8125rem;
   font-family: ui-monospace, monospace; background: var(--fail-bg);
@@ -259,10 +277,11 @@ tr:hover td { background: var(--surface-hover); }
       <button class="filter-btn f-skip"        id="f-skip" onclick="setFilter('skip')">Skipped</button>
       <button class="filter-btn f-flaky"       id="f-flaky" onclick="setFilter('flaky')">🔀 Flaky <span id="cnt-flaky">%%FLAKY%%</span></button>
       <button class="view-toggle" id="v-toggle" onclick="toggleView()">View: Grouped</button>
+      <button class="view-toggle" id="btn-timeline" onclick="toggleTimeline(this)">⏱ Timeline</button>
       <div class="pager-info" id="cnt"></div>
     </div>
 
-    <div style="overflow-x:auto">
+    <div id="table-inner" style="overflow-x:auto">
       <table>
         <thead>
           <tr>
@@ -276,6 +295,7 @@ tr:hover td { background: var(--surface-hover); }
       </table>
     </div>
     <div class="pager" id="pgr"></div>
+    <div id="timeline-view"></div>
   </div>
 
 </div><!-- /container -->
@@ -619,6 +639,59 @@ function pageRange(c, t) {
   if (c < t-2) r.push('…');
   r.push(t);
   return r;
+}
+
+// ── Timeline / Gantt ───────────────────────────────────────────────────────
+
+function buildTimeline() {
+  const tl = document.getElementById('timeline-view');
+  const rows = ALL_DATA.filter(t => t[3] > 0);
+  if (rows.length === 0) {
+    tl.innerHTML = '<p style="padding:24px;color:var(--text-muted)">No timing data available.</p>';
+    return;
+  }
+  const maxDur = rows.reduce((m, t) => Math.max(m, t[3]), 0);
+
+  const suites = {};
+  const suiteOrder = [];
+  for (const t of rows) {
+    if (!suites[t[0]]) { suites[t[0]] = []; suiteOrder.push(t[0]); }
+    suites[t[0]].push(t);
+  }
+  suiteOrder.sort();
+
+  let html = '';
+  for (const suiteName of suiteOrder) {
+    html += `<div class="gantt-suite"><div class="gantt-suite-label">${esc(suiteName)}</div>`;
+    for (const t of suites[suiteName]) {
+      const pct = maxDur > 0 ? (t[3] / maxDur * 100).toFixed(1) : '0';
+      html += `<div class="gantt-row">
+        <div class="gantt-label" title="${esc(t[1])}">${esc(t[1])}</div>
+        <div class="gantt-track"><div class="gantt-bar ${esc(t[2])}" style="width:${pct}%"></div></div>
+        <div class="gantt-dur">${fmtDur(t[3])}</div>
+      </div>`;
+    }
+    html += '</div>';
+  }
+  tl.innerHTML = html;
+}
+
+function toggleTimeline(btn) {
+  const tl    = document.getElementById('timeline-view');
+  const inner = document.getElementById('table-inner');
+  const pgr   = document.getElementById('pgr');
+  if (tl.classList.contains('visible')) {
+    tl.classList.remove('visible');
+    inner.style.display = '';
+    pgr.style.display   = '';
+    btn.textContent = '⏱ Timeline';
+  } else {
+    if (!tl.innerHTML) buildTimeline();
+    tl.classList.add('visible');
+    inner.style.display = 'none';
+    pgr.style.display   = 'none';
+    btn.textContent = '📋 Table';
+  }
 }
 
 // ── Boot ───────────────────────────────────────────────────────────────────
