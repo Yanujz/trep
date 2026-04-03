@@ -94,6 +94,16 @@ input[type="search"]:focus { outline:none; border-color:var(--primary);
 .view-btn { margin-left:auto; padding:6px 14px; border-radius:8px; border:1px solid var(--border);
             background:var(--bg); color:var(--text-main); font-weight:600; cursor:pointer; font-size:.875rem; }
 .view-btn:hover { background:#e2e8f0; }
+
+/* Treemap */
+#treemap-view { display:none; padding:24px; }
+#treemap-view.visible { display:block; }
+#treemap-canvas { width:100%; position:relative; background:var(--surface); border:1px solid var(--border); border-radius:8px; overflow:hidden; min-height:400px; }
+.treemap-cell { position:absolute; box-sizing:border-box; border:1px solid rgba(255,255,255,.15); display:flex; flex-direction:column; justify-content:flex-end; padding:4px; cursor:pointer; transition:filter .15s; overflow:hidden; }
+.treemap-cell:hover { filter:brightness(1.1); z-index:1; }
+.treemap-cell-label { font-size:.65rem; font-weight:700; color:#fff; text-shadow:0 1px 2px rgba(0,0,0,.6); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.treemap-cell-pct { font-size:.6rem; color:rgba(255,255,255,.85); }
+#treemap-tooltip { position:fixed; background:var(--surface); border:1px solid var(--border); border-radius:8px; padding:10px 14px; font-size:.8rem; pointer-events:none; display:none; z-index:100; box-shadow:0 4px 12px rgba(0,0,0,.15); max-width:280px; }
 .pager-info { font-size:.875rem; color:var(--text-muted); font-weight:500; }
 
 /* Table */
@@ -211,6 +221,7 @@ tr:hover td { background:var(--bg); }
       <button class="filter-btn f-warn" id="f-warn" onclick="setFilter('warn')">Partial (50–80%)</button>
       <button class="filter-btn" id="f-zero" onclick="setFilter('zero')">Uncovered</button>
       <button class="view-btn" id="v-btn" onclick="toggleView()">View: Tree</button>
+      <button class="view-btn" id="btn-treemap" onclick="toggleTreemap(this)">🗺 Treemap</button>
       <div class="pager-info" id="cnt"></div>
     </div>
     <div style="overflow-x:auto">
@@ -227,6 +238,11 @@ tr:hover td { background:var(--bg); }
     <div class="pager" id="pgr"></div>
   </div>
 
+  <div id="treemap-view">
+    <div id="treemap-canvas"></div>
+  </div>
+  <div id="treemap-tooltip"></div>
+
 </div><!-- /container -->
 
 <script>
@@ -241,6 +257,7 @@ const TEST_URL    = "%%TEST_URL%%";
 const OVERALL_LINE_PCT   = %%LINE_PCT%%;
 const OVERALL_BRANCH_PCT = %%BRANCH_PCT%%;
 const OVERALL_FUNC_PCT   = %%FUNC_PCT%%;
+window.COV_FILES = %%COV_FILES_JSON%%;
 
 const PAGE_FILES = 200;
 const PAGE_DIRS  = 50;
@@ -540,6 +557,121 @@ function renderPager(total, pages) {
 }
 function mkBtn(label,dis,fn){const b=document.createElement('button');b.textContent=label;b.disabled=dis;b.onclick=fn;return b;}
 function pageRange(c,t){if(t<=7)return Array.from({length:t},(_,i)=>i+1);const r=[1];if(c>3)r.push('…');for(let i=Math.max(2,c-1);i<=Math.min(t-1,c+1);i++)r.push(i);if(c<t-2)r.push('…');r.push(t);return r;}
+
+// ── Treemap ───────────────────────────────────────────────────────────────────
+
+function covColor(pct) {
+  if (pct >= 80) return '#22c55e';
+  if (pct >= 60) return '#84cc16';
+  if (pct >= 40) return '#f59e0b';
+  if (pct >= 20) return '#ef4444';
+  return '#991b1b';
+}
+
+function squarify(items, x, y, w, h, result) {
+  if (!items.length) return;
+  const total = items.reduce((s,i) => s + i.area, 0);
+  if (total === 0 || w < 2 || h < 2) return;
+
+  let row = [], remaining = items.slice();
+  const aspect = (rects, side) => {
+    const ra = rects.reduce((s,i) => s + i.area, 0);
+    return rects.reduce((mx,i) => {
+      const r = (ra / total) * (w * h);
+      const s2 = side * side;
+      return Math.max(mx, Math.max(s2 * i.area / (r * r), r * r / (s2 * i.area)));
+    }, 0);
+  };
+
+  while (remaining.length) {
+    const item = remaining[0];
+    const side = Math.min(w, h);
+    if (row.length === 0 || aspect([...row, item], side) < aspect(row, side)) {
+      row.push(item);
+      remaining.shift();
+    } else {
+      layoutRow(row, x, y, w, h, total, result);
+      const ra = row.reduce((s,i) => s + i.area, 0);
+      if (w <= h) { y += (ra / total) * h; h -= (ra / total) * h; }
+      else         { x += (ra / total) * w; w -= (ra / total) * w; }
+      row = [];
+    }
+  }
+  if (row.length) layoutRow(row, x, y, w, h, total, result);
+}
+
+function layoutRow(row, x, y, w, h, total, result) {
+  const ra = row.reduce((s,i) => s + i.area, 0);
+  const frac = ra / total;
+  let offset = 0;
+  if (w <= h) {
+    const rh = frac * h;
+    for (const item of row) {
+      const rw = (item.area / ra) * w;
+      result.push({item, x: x+offset, y, w:rw, h:rh});
+      offset += rw;
+    }
+  } else {
+    const rw = frac * w;
+    for (const item of row) {
+      const rh = (item.area / ra) * h;
+      result.push({item, x, y:y+offset, w:rw, h:rh});
+      offset += rh;
+    }
+  }
+}
+
+function buildTreemap() {
+  const canvas = document.getElementById('treemap-canvas');
+  canvas.innerHTML = '';
+  const W = canvas.offsetWidth || 800, H = Math.max(400, W * 0.5);
+  canvas.style.height = H + 'px';
+
+  const items = (window.COV_FILES || []).filter(f => f.lines_total > 0).map(f => ({
+    path: f.path, pct: f.lines_pct, area: f.lines_total,
+    covered: f.lines_covered, total: f.lines_total
+  }));
+  items.sort((a,b) => b.area - a.area);
+
+  const layout = [];
+  squarify(items, 0, 0, W, H, layout);
+
+  const tip = document.getElementById('treemap-tooltip');
+
+  for (const {item, x, y, w, h} of layout) {
+    const cell = document.createElement('div');
+    cell.className = 'treemap-cell';
+    cell.style.cssText = 'left:'+x.toFixed(1)+'px;top:'+y.toFixed(1)+'px;width:'+w.toFixed(1)+'px;height:'+h.toFixed(1)+'px;background:'+covColor(item.pct);
+    if (h > 24) {
+      const name = item.path.split('/').pop();
+      cell.innerHTML = '<span class="treemap-cell-label">'+name+'</span><span class="treemap-cell-pct">'+item.pct.toFixed(1)+'%</span>';
+    }
+    cell.onmouseenter = () => {
+      tip.style.display = 'block';
+      tip.innerHTML = '<strong>'+item.path+'</strong><br>Lines: '+item.covered+'/'+item.total+' ('+item.pct.toFixed(1)+'%)';
+    };
+    cell.onmousemove = e => { tip.style.left=(e.clientX+12)+'px'; tip.style.top=(e.clientY-8)+'px'; };
+    cell.onmouseleave = () => { tip.style.display='none'; };
+    canvas.appendChild(cell);
+  }
+}
+
+function toggleTreemap(btn) {
+  const tv = document.getElementById('treemap-view');
+  const tableCard = document.querySelector('.card:last-of-type') || document.querySelector('table').closest('.card');
+  if (tv.classList.contains('visible')) {
+    tv.classList.remove('visible');
+    tv.style.display = 'none';
+    if (tableCard) tableCard.style.display = '';
+    btn.textContent = '🗺 Treemap';
+  } else {
+    buildTreemap();
+    tv.classList.add('visible');
+    tv.style.display = 'block';
+    if (tableCard) tableCard.style.display = 'none';
+    btn.textContent = '📋 Table';
+  }
+}
 </script>
 </body>
 </html>
