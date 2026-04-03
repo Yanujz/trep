@@ -9,9 +9,9 @@ type Status string
 
 // StatusPass, StatusFail, StatusSkip, and StatusFlaky are the possible test outcome values.
 const (
-	StatusPass  Status = "pass"
-	StatusFail  Status = "fail"
-	StatusSkip  Status = "skip"
+	StatusPass Status = "pass"
+	StatusFail Status = "fail"
+	StatusSkip Status = "skip"
 	// StatusFlaky indicates a test that failed but ultimately passed after retries.
 	StatusFlaky Status = "flaky"
 )
@@ -22,10 +22,10 @@ type TestCase struct {
 	Name        string // Test identifier
 	Status      Status
 	Duration    time.Duration
-	Message     string // Failure / error / skip reason
-	Stdout      string // Captured output; non-empty only for failures
-	File        string // Source file path (available from GTest XML)
-	Line        int    // Source line number (available from GTest XML)
+	Message     string   // Failure / error / skip reason
+	Stdout      string   // Captured output; non-empty only for failures
+	File        string   // Source file path (available from GTest XML)
+	Line        int      // Source line number (available from GTest XML)
 	Attachments []string // file paths or base64 data URIs (e.g. from Playwright/Cypress)
 }
 

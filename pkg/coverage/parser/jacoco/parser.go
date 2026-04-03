@@ -127,7 +127,7 @@ func (Parser) Parse(r io.Reader, source string) (*covmodel.CovReport, error) {
 
 			// Add methods found in classes referencing this source filename
 			if funcs, ok := classMethods[sf.Name]; ok {
-				// We don't have easily accessible call counts per method in standard jacoco method node 
+				// We don't have easily accessible call counts per method in standard jacoco method node
 				// unless we parse method counters.
 				// We'll approximate method coverage if it exists in the covered lines.
 				coveredLines := make(map[int]bool)
