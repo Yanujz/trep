@@ -152,6 +152,14 @@ tr:hover td { background: var(--surface-hover); }
 .duration { color: var(--text-muted); font-variant-numeric: tabular-nums; font-size: .875rem; }
 .duration.slow { color: var(--fail-text); font-weight: 600; }
 
+/* ── Attachments ──────────────────────────────────────────────────────────── */
+.attachments { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
+.attachment-img { max-width: 320px; max-height: 240px; border-radius: 8px; border: 1px solid var(--border); cursor: pointer; }
+.attachment-link { display: inline-flex; align-items: center; gap: 4px; padding: 4px 10px;
+                   background: var(--surface-alt); border: 1px solid var(--border); border-radius: 6px;
+                   font-size: .75rem; color: var(--text-muted); text-decoration: none; }
+.attachment-link:hover { color: var(--text-main); background: var(--surface-hover); }
+
 .error-msg {
   margin-top: 6px; color: var(--fail-text); font-size: .8125rem;
   font-family: ui-monospace, monospace; background: var(--fail-bg);
@@ -275,8 +283,9 @@ tr:hover td { background: var(--surface-hover); }
 <script>
 "use strict";
 
-// Row layout (pre-injection):  [suite, name, result, dur_ms, detail, stdout]
-//                           or [suite, name, result, dur_ms, detail, stdout, file, line]
+// Row layout (pre-injection):  [suite, name, result, dur_ms, detail, stdout, attachJSON]
+//                           or [suite, name, result, dur_ms, detail, stdout, file, line, attachJSON]
+// attachJSON is always the last element before the stable index appended below.
 // JS injects a stable index as the last element after loading.
 const ALL_DATA = %%DATA%%;
 ALL_DATA.forEach((t, i) => t.push(i));  // append stableId
@@ -375,12 +384,34 @@ function makeRow(t, slowMs, hideSuite) {
   const dur      = t[3], detail = t[4], stdout = t[5];
   const stableId = t[t.length - 1];
 
-  // File/line are at [6],[7] only when the pre-injection row had 8 elements.
-  const hasLoc  = (t.length - 1) === 8 && t[6];
+  // attachJSON is always the second-to-last element (before stableId).
+  // File/line are at [6],[7] only when the pre-injection row had 9 elements
+  // (suite,name,result,dur,detail,stdout,file,line,attachJSON).
+  const hasLoc  = (t.length - 1) === 9 && t[6];
   const filePart = hasLoc
     ? '<div class="file-loc">' + esc(t[7] > 0 ? t[6]+':'+t[7] : t[6]) + '</div>'
     : '';
 
+  // Render attachment thumbnails / links.
+  let attachHtml = '';
+  try {
+    const attaches = JSON.parse(t[t.length - 2]);
+    if (Array.isArray(attaches) && attaches.length > 0) {
+      const imgExts = /\.(png|jpe?g|gif|webp)$/i;
+      let inner = '';
+      for (const a of attaches) {
+        if (imgExts.test(a) || a.startsWith('data:image/')) {
+          inner += '<a href="' + esc(a) + '" target="_blank" rel="noopener">'
+                +  '<img class="attachment-img" src="' + esc(a) + '" alt="attachment"></a>';
+        } else {
+          const fname = a.split('/').pop().split('\\').pop() || 'attachment';
+          inner += '<a class="attachment-link" href="' + esc(a) + '" target="_blank" rel="noopener">'
+                +  '📎 ' + esc(fname) + '</a>';
+        }
+      }
+      attachHtml = '<div class="attachments">' + inner + '</div>';
+    }
+  } catch(e) {}
   const durCls  = dur >= slowMs ? 'duration slow' : 'duration';
   const det     = detail
     ? '<div style="position:relative;display:inline-block;max-width:100%;width:100%">' +
@@ -403,7 +434,7 @@ function makeRow(t, slowMs, hideSuite) {
 
   return `<tr>
     <td>${suiteCol}</td>
-    <td><div class="test-name">${esc(name)}</div>${filePart}${det}${extra}</td>
+    <td><div class="test-name">${esc(name)}</div>${filePart}${det}${extra}${attachHtml}</td>
     <td><span class="badge b-${esc(result)}">${esc(result)}</span></td>
     <td class="${durCls}">${fmtDur(dur)}</td>
   </tr>`;
