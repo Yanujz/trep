@@ -5,10 +5,15 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"runtime"
+	"sync"
 	"time"
+
+	"golang.org/x/sync/errgroup"
 
 	"github.com/spf13/cobra"
 
+	covmodel "github.com/Yanujz/trep/pkg/coverage/model"
 	covparser "github.com/Yanujz/trep/pkg/coverage/parser"
 	covhtml "github.com/Yanujz/trep/pkg/coverage/render/html"
 	"github.com/Yanujz/trep/pkg/delta"
@@ -21,7 +26,7 @@ import (
 type reportOpts struct {
 	// Inputs
 	testInputs []string
-	covInput   string
+	covInputs  []string
 	testFormat string
 	covFormat  string
 
@@ -78,7 +83,7 @@ Examples
 
 	f := cmd.Flags()
 	f.StringArrayVar(&o.testInputs, "tests", nil, "test result file(s) (required)")
-	f.StringVar(&o.covInput, "cov", "", "coverage file (required)")
+	f.StringArrayVar(&o.covInputs, "cov", nil, "coverage file(s) (required, repeatable)")
 	f.StringVar(&o.testFormat, "format-test", o.testFormat, "force test input format")
 	f.StringVar(&o.covFormat, "format-cov", o.covFormat, "force coverage input format")
 	f.StringVar(&o.outputDir, "output-dir", ".", "directory to write report files into")
@@ -173,12 +178,36 @@ func (o *reportOpts) run(_ *cobra.Command, _ []string) error {
 		}
 	}
 
-	if !o.quiet {
-		fmt.Fprintf(os.Stderr, "parsing  %s\n", o.covInput)
+	covReports := make([]*covmodel.CovReport, len(o.covInputs))
+	eg := new(errgroup.Group)
+	eg.SetLimit(runtime.NumCPU())
+	var mu sync.Mutex
+	for i, p := range o.covInputs {
+		idx, path := i, p
+		eg.Go(func() error {
+			if !o.quiet {
+				mu.Lock()
+				fmt.Fprintf(os.Stderr, "parsing  %s\n", path)
+				mu.Unlock()
+			}
+			r, err := covparser.ParseFile(path, forcedCov, o.stripPrefix)
+			if err != nil {
+				return err
+			}
+			covReports[idx] = r
+			return nil
+		})
 	}
-	covRep, err := covparser.ParseFile(o.covInput, forcedCov, o.stripPrefix)
-	if err != nil {
+	if err := eg.Wait(); err != nil {
 		return err
+	}
+	var covRep *covmodel.CovReport
+	for _, r := range covReports {
+		if covRep == nil {
+			covRep = r
+		} else {
+			covRep.Merge(r)
+		}
 	}
 	if !o.quiet {
 		lt, lc, _, _, _, _ := covRep.Stats()
@@ -189,6 +218,7 @@ func (o *reportOpts) run(_ *cobra.Command, _ []string) error {
 	// ── Delta ──────────────────────────────────────────────────────────────
 	var base *delta.Snapshot
 	if o.baseline != "" {
+		var err error
 		base, err = delta.Load(o.baseline)
 		if err != nil {
 			return err
