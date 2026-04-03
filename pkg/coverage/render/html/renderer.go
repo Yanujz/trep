@@ -166,6 +166,26 @@ func (Renderer) Render(w io.Writer, rep *covmodel.CovReport, opts Options) error
 
 	pct := func(n, d int) string { return fmt.Sprintf("%.1f", safePct(n, d)) }
 
+	// Build COV_FILES JSON for treemap.
+	type treemapFile struct {
+		Path         string  `json:"path"`
+		LinesPct     float64 `json:"lines_pct"`
+		LinesCovered int     `json:"lines_covered"`
+		LinesTotal   int     `json:"lines_total"`
+	}
+	tfFiles := make([]treemapFile, len(rep.Files))
+	for i, f := range rep.Files {
+		tfFiles[i] = treemapFile{
+			Path:         f.Path,
+			LinesPct:     round2(f.LinePct()),
+			LinesCovered: f.LinesCovered,
+			LinesTotal:   f.LinesTotal,
+		}
+	}
+	tfJSON, _ := json.Marshal(tfFiles)
+	covFilesStr := strings.NewReplacer("<", `\u003c`, ">", `\u003e`, "&", `\u0026`).
+		Replace(string(tfJSON))
+
 	r := strings.NewReplacer(
 		"%%TITLE%%", htmlpkg.EscapeString(title),
 		"%%TS%%", htmlpkg.EscapeString(tsStr),
@@ -188,6 +208,7 @@ func (Renderer) Render(w io.Writer, rep *covmodel.CovReport, opts Options) error
 		"%%DELTA%%", deltaStr,
 		"%%TEST_URL%%", testURL,
 		"%%DATA%%", dataStr,
+		"%%COV_FILES_JSON%%", covFilesStr,
 	)
 
 	_, err = io.WriteString(w, r.Replace(templateHTML))
