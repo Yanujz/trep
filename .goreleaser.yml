@@ -38,29 +38,18 @@ checksum:
 brews:
   - name: trep
     repository:
-      owner: Yanujz
+      owner: trep-dev
       name: trep
       branch: main
       token: "{{ .Env.GITHUB_TOKEN }}"
     directory: Formula
-    homepage: "https://github.com/Yanujz/trep"
+    homepage: "https://github.com/trep-dev/trep"
     description: "Convert test results and coverage data to rich self-contained HTML reports"
     license: "MIT"
     install: |
       bin.install "trep"
     test: |
       system "#{bin}/trep", "--version"
-
-scoops:
-  - name: trep
-    repository:
-      owner: Yanujz
-      name: scoop-bucket
-      branch: main
-      token: "{{ .Env.GITHUB_TOKEN }}"
-    homepage: "https://github.com/Yanujz/trep"
-    description: "Convert test results and coverage data to rich self-contained HTML reports"
-    license: MIT
 
 changelog:
   sort: asc
@@ -71,7 +60,7 @@ changelog:
 
 release:
   github:
-    owner: Yanujz
+    owner: trep-dev
     name: trep
   draft: false
   prerelease: auto
